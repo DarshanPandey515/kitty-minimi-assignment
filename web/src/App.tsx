@@ -109,7 +109,7 @@ export function App() {
             </div>
           ) : msgs.map((m, i) => (
             <Message key={i} from={m.role} animateIn={i >= msgs.length - 2}>
-              <MessageAvatar className={m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}>{m.role === "user" ? "You" : <Cat />}</MessageAvatar>
+              <MessageAvatar className={m.role === "user" ? "bg-transparent text-muted-foreground" : "bg-muted"}>{m.role === "user" ? "You" : <Cat />}</MessageAvatar>
               <MessageContent>
                 <MessageHeader>{m.role === "user" ? "You" : "Kitty"}</MessageHeader>
                 {m.role === "user" ? (
