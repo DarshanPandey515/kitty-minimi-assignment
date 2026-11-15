@@ -48,7 +48,7 @@ export function App() {
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let buf = "";
-      for (;;) {
+      for (; ;) {
         const { value, done } = await reader.read();
         if (done) break;
         buf += dec.decode(value, { stream: true });
@@ -96,16 +96,20 @@ export function App() {
 
   return (
     <main className="mx-auto flex h-dvh w-full max-w-4xl flex-col p-3 sm:p-6">
-      <header className="flex items-center gap-3 px-2 pb-4">
-        <span className="grid size-10 place-items-center rounded-2xl bg-primary text-primary-foreground"><Cat className="size-5" /></span>
-        <div><h1 className="font-semibold tracking-tight">Kitty</h1><p className="text-xs text-muted-foreground">Your curious, context-aware assistant</p></div>
+      <header className="flex items-center gap-3 px-2">
+        {/* <span className="grid size-10 place-items-center rounded-2xl bg-primary text-primary-foreground"><Cat className="size-5" /></span> */}
+        <div><h1 className="font-semibold tracking-tighter">Kitty</h1>
+
+          {/* <p className="text-xs text-muted-foreground">Your curious, context-aware assistant</p> */}
+
+        </div>
       </header>
       <ChatApp className="flex min-h-0 flex-1 flex-col rounded-2xl">
         <MessageScroller busy={busy} label="Kitty conversation" className="min-h-0 flex-1" viewportClassName="h-full" contentClassName="mx-auto w-full max-w-3xl gap-5 p-4 sm:p-6">
           {msgs.length === 0 ? (
             <div className="grid h-full place-content-center justify-items-center gap-3 text-center">
-              <span className="grid size-12 place-items-center rounded-full bg-muted"><Bot className="size-6 text-muted-foreground" /></span>
-              <div><p className="font-medium">What’s on your mind?</p><p className="mt-1 text-sm text-muted-foreground">Ask Kitty anything. She can search and remember context.</p></div>
+              <span className="grid size-10 place-items-center rounded-2xl bg-primary text-primary-foreground"><Cat className="size-5" /></span>
+              <div><p className="font-medium">What’s on your mind?</p><p className="mt-1 text-sm text-muted-foreground">Ask Kitty anything. She's curious assistant.</p></div>
             </div>
           ) : msgs.map((m, i) => (
             <Message key={i} from={m.role} animateIn={i >= msgs.length - 2}>
@@ -118,29 +122,29 @@ export function App() {
                   </MessageBubble>
                 ) : (
                   <>
-                  {!!m.activity?.length && <AgentActivity
-                    items={m.activity}
-                    contentType="search"
-                    status={busy && i === msgs.length - 1 ? "working" : "complete"}
-                    activeLabel={m.activity.at(-1)?.query ? `Searching “${m.activity.at(-1)?.query}”…` : "Searching the web…"}
-                    summary={`${m.activity.map((item) => item.query).join(" · ")} · ${m.sources?.length ?? 0} sources`}
-                    className="mb-2"
-                  />}
-                  <StreamingResponse
-                    status={busy && i === msgs.length - 1 ? "streaming" : m.text.includes("\n[Error:") ? "error" : "complete"}
-                    copyText={m.text}
-                    announce={false}
-                    showFeedback={false}
-                    sources={m.sources?.map((source, index) => ({
-                      id: `${index}-${source.url}`,
-                      title: source.title,
-                      domain: [source.published_at, source.query].filter(Boolean).join(" · "),
-                      url: source.url,
-                    }))}
-                    contentClassName="px-1"
-                  >
-                    {m.text || (busy && i === msgs.length - 1 ? <MessageTyping label="Kitty is responding" /> : null)}
-                  </StreamingResponse>
+                    {!!m.activity?.length && <AgentActivity
+                      items={m.activity}
+                      contentType="search"
+                      status={busy && i === msgs.length - 1 ? "working" : "complete"}
+                      activeLabel={m.activity.at(-1)?.query ? `Searching “${m.activity.at(-1)?.query}”…` : "Searching the web…"}
+                      summary={`${m.activity.map((item) => item.query).join(" · ")} · ${m.sources?.length ?? 0} sources`}
+                      className="mb-2"
+                    />}
+                    <StreamingResponse
+                      status={busy && i === msgs.length - 1 ? "streaming" : m.text.includes("\n[Error:") ? "error" : "complete"}
+                      copyText={m.text}
+                      announce={false}
+                      showFeedback={false}
+                      sources={m.sources?.map((source, index) => ({
+                        id: `${index}-${source.url}`,
+                        title: source.title,
+                        domain: [source.published_at, source.query].filter(Boolean).join(" · "),
+                        url: source.url,
+                      }))}
+                      contentClassName="px-1"
+                    >
+                      {m.text || (busy && i === msgs.length - 1 ? <MessageTyping label="Kitty is responding" /> : null)}
+                    </StreamingResponse>
                   </>
                 )}
               </MessageContent>
