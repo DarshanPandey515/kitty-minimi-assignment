@@ -28,6 +28,7 @@ export function App() {
 
   async function send(message: string) {
     if (!message.trim() || busy) return;
+    setInput("");
     setBusy(true);
     setStatus("Thinking…");
     setMsgs((ms) => [...ms, { role: "user", text: message }, { role: "assistant", text: "", sources: [] }]);
