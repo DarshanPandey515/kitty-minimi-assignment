@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "skills": {
+    "beui": {
+      "source": "starc007/ui-components",
+      "sourceType": "github",
+      "skillPath": "skills/beui/SKILL.md",
+      "computedHash": "6ae66edf98cfe88315a5ea7bc5cb644958fac4565edc98d654b0e443a38bd600"
+    }
+  }
+}
