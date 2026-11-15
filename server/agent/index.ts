@@ -1,8 +1,8 @@
 import { ensureSession, insertTurn, lastEntities, lastTurns, claimsByEntityOrText, type Turn } from "../db/queries.js";
 import { resolveRelative } from "../time.js";
 import { route, type Plan } from "./router.js";
-import { prefetchWithStats } from "./prefetch.js";
-import { synthesize } from "./synthesizer.js";
+import { isInternalAssistantText, prefetchWithStats } from "./prefetch.js";
+import { decideRecall, synthesize } from "./synthesizer.js";
 import { extract } from "./extractor.js";
 
 export type AgentEvent =
@@ -17,7 +17,7 @@ export async function runAgent(args: { sessionId: string; userMessage: string; o
   const { sessionId, userMessage, onEvent } = args;
   ensureSession(sessionId);
 
-  const history: Turn[] = lastTurns(sessionId, 10); // before inserting the current message
+  const history: Turn[] = lastTurns(sessionId, 10).filter((t) => t.role !== "assistant" || !isInternalAssistantText(t.text)); // before inserting the current message
   insertTurn(sessionId, "user", userMessage); // 1
 
   const dateRange = resolveRelative(userMessage); // 2
@@ -27,28 +27,33 @@ export async function runAgent(args: { sessionId: string; userMessage: string; o
   const pre = await prefetchWithStats(plan, sessionId); // 4
   onEvent({ type: "memory", data: { turnCount: pre.turnCount, claimCount: pre.claimCount } });
 
-  // 5. synthesize with bounded escape hatch (max 1 retry)
-  const run = (memoryBlock: string, allowRecall: boolean) =>
-    synthesize({
-      plan, memoryBlock, history, userMessage, allowRecall,
-      onToken: (text) => onEvent({ type: "token", data: { text } }),
-      onSearch: (query, results) =>
-        onEvent({
-          type: "tool",
-          data: results
-            ? { query, results: results.map(({ title, url, published_at }) => ({ title, url, published_at })) }
-            : { query },
-        }),
-    });
-
-  let out = await run(pre.block, true);
-  if (out.needRecall) {
-    const extra = claimsByEntityOrText(out.needRecall);
-    const lines = extra.map((c) => `  { entity: ${JSON.stringify(c.entity)}, attribute: ${JSON.stringify(c.attribute)}, value: ${JSON.stringify(c.value)}, source: ${JSON.stringify(c.source_url ?? "unknown")}, as_of: "${c.as_of.slice(0, 10)}" }`);
-    const memory2 = pre.block.replace("</memory>", `\nRecalled on request ("${out.needRecall}"):\n${lines.join("\n") || "  (nothing found)"}\n</memory>`);
-    onEvent({ type: "memory", data: { turnCount: pre.turnCount, claimCount: pre.claimCount + extra.length } });
-    out = await run(memory2, false); // forced plain answer, no second retry
+  let memoryBlock = pre.block;
+  if (plan.intent === "recall" || plan.intent === "temporal_delta") {
+    try {
+      const decision = await decideRecall({ plan, memoryBlock, userMessage });
+      if (decision.action === "recall") {
+        const extra = claimsByEntityOrText(decision.query || userMessage);
+        const lines = extra.map((c) => `  { entity: ${JSON.stringify(c.entity)}, attribute: ${JSON.stringify(c.attribute)}, value: ${JSON.stringify(c.value)}, source: ${JSON.stringify(c.source_url ?? "unknown")}, as_of: "${c.as_of.slice(0, 10)}" }`);
+        memoryBlock = memoryBlock.replace("</memory>", `\nAdditional recalled claims:\n${lines.join("\n") || "  (nothing found)"}\n</memory>`);
+        onEvent({ type: "memory", data: { turnCount: pre.turnCount, claimCount: pre.claimCount + extra.length } });
+        await decideRecall({ plan, memoryBlock, userMessage }); // one bounded recall retry
+      }
+    } catch (err) {
+      console.error("[recall decision] fail open:", (err as Error).message);
+    }
   }
+
+  const out = await synthesize({
+    plan, memoryBlock, history, userMessage,
+    onToken: (text) => onEvent({ type: "token", data: { text } }),
+    onSearch: (query, results) =>
+      onEvent({
+        type: "tool",
+        data: results
+          ? { query, results: results.map(({ title, url, published_at }) => ({ title, url, published_at })) }
+          : { query },
+      }),
+  });
 
   const assistant = insertTurn(sessionId, "assistant", out.text); // 6
   onEvent({ type: "done", data: { turnId: assistant.id } });
