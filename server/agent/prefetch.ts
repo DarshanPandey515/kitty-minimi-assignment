@@ -8,12 +8,12 @@ export function isInternalAssistantText(text: string) {
   return text.includes("Escape hatch:") || text.includes('{"need_recall"');
 }
 
-const fmtTurn = (t: Turn) => `  [${t.ts.slice(0, 16)}Z] ${t.role}: ${JSON.stringify(t.text.length > 400 ? t.text.slice(0, 400) + "…" : t.text)}`;
+export const formatPriorTurn = (t: Turn) => `  [${t.ts.slice(0, 16)}Z] ${t.role}: ${JSON.stringify(t.text.length > 400 ? t.text.slice(0, 400) + "…" : t.text)}`;
 const fmtClaim = (c: Claim) =>
   `  { entity: ${JSON.stringify(c.entity)}, attribute: ${JSON.stringify(c.attribute)}, value: ${JSON.stringify(c.value)}, source: ${JSON.stringify(c.source_url ?? "unknown")}, as_of: "${c.as_of.slice(0, 10)}" }`;
 
 export function renderMemory(turns: Turn[], claims: Claim[]): string {
-  const t = turns.map((x) => ({ ts: x.ts, line: fmtTurn(x) }));
+  const t = turns.map((x) => ({ ts: x.ts, line: formatPriorTurn(x) }));
   const c = claims.map((x) => ({ ts: x.as_of, line: fmtClaim(x) }));
   const build = () =>
     `<memory>\nToday: ${todayLabel()}\n\nRecent turns:\n${t.map((x) => x.line).join("\n") || "  (none)"}\n\nYour prior claims (dated):\n${c.map((x) => x.line).join("\n") || "  (none)"}\n</memory>`;

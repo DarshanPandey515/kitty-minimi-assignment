@@ -1,7 +1,7 @@
-import { ensureSession, insertTurn, lastEntities, lastTurns, claimsByEntityOrText, type Turn } from "../db/queries.js";
+import { ensureSession, insertTurn, lastEntities, lastTurns, claimsByEntityOrText, searchTurns, type Turn } from "../db/queries.js";
 import { resolveRelative } from "../time.js";
 import { route, type Plan } from "./router.js";
-import { isInternalAssistantText, prefetchWithStats } from "./prefetch.js";
+import { formatPriorTurn, isInternalAssistantText, prefetchWithStats } from "./prefetch.js";
 import { decideRecall, synthesize } from "./synthesizer.js";
 import { extract } from "./extractor.js";
 
@@ -18,7 +18,7 @@ export async function runAgent(args: { sessionId: string; userMessage: string; o
   ensureSession(sessionId);
 
   const history: Turn[] = lastTurns(sessionId, 10).filter((t) => t.role !== "assistant" || !isInternalAssistantText(t.text)); // before inserting the current message
-  insertTurn(sessionId, "user", userMessage); // 1
+  const currentTurn = insertTurn(sessionId, "user", userMessage); // 1
 
   const dateRange = resolveRelative(userMessage); // 2
   const plan = await route(userMessage, dateRange, lastEntities(sessionId)); // 3
@@ -30,6 +30,13 @@ export async function runAgent(args: { sessionId: string; userMessage: string; o
   let memoryBlock = pre.block;
   if (plan.intent === "recall" || plan.intent === "temporal_delta") {
     try {
+      const recentIds = new Set(history.map((turn) => turn.id));
+      const recalledTurns = searchTurns(sessionId, userMessage, 20)
+        .filter((turn) => turn.id !== currentTurn.id && !recentIds.has(turn.id))
+        .filter((turn) => turn.role !== "assistant" || !isInternalAssistantText(turn.text));
+      if (recalledTurns.length) {
+        memoryBlock = memoryBlock.replace("</memory>", `\nRelevant matching prior turns:\n${recalledTurns.map(formatPriorTurn).join("\n")}\n</memory>`);
+      }
       const decision = await decideRecall({ plan, memoryBlock, userMessage });
       if (decision.action === "recall") {
         const extra = claimsByEntityOrText(decision.query || userMessage);

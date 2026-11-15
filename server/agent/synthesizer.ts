@@ -32,7 +32,7 @@ export async function decideRecall(args: {
     model: MODEL_ROUTER(),
     contents: [{ role: "user", parts: [{ text: JSON.stringify({ intent: args.plan.intent, entities: args.plan.entities, message: args.userMessage }) }] }],
     config: {
-      systemInstruction: recallDecisionSystemPrompt(args.memoryBlock),
+      systemInstruction: recallDecisionSystemPrompt(args.memoryBlock, args.plan.intent),
       temperature: 0,
       maxOutputTokens: 60,
       responseMimeType: "application/json",

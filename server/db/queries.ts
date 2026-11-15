@@ -24,6 +24,36 @@ export function lastTurns(sessionId: string, n: number): Turn[] {
   return rows.reverse();
 }
 
+const RECALL_STOP_WORDS = new Set("about after again any are did do for from has have how i in is it me my of on or our since that the then there this time to today was we were what when where which who why with you your".split(" "));
+
+export function searchTurns(sessionId: string, query: string, limit = 20): Turn[] {
+  const timestamp = query.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z/)?.[0];
+  if (timestamp) {
+    const center = Date.parse(timestamp);
+    if (!Number.isFinite(center)) return [];
+    return db.prepare("SELECT * FROM turns WHERE session_id = ? AND ts BETWEEN ? AND ? ORDER BY ts ASC LIMIT ?")
+      .all(sessionId, new Date(center - 120_000).toISOString(), new Date(center + 120_000).toISOString(), limit) as Turn[];
+  }
+
+  const terms = [...new Set(query.toLowerCase().match(/[a-z0-9]{3,}/g) ?? [])]
+    .filter((term) => !RECALL_STOP_WORDS.has(term));
+  if (!terms.length) return [];
+  const clauses = terms.map(() => "LOWER(text) LIKE ?").join(" OR ");
+  const rows = db.prepare(`SELECT * FROM turns WHERE session_id = ? AND (${clauses}) ORDER BY ts DESC LIMIT 200`)
+    .all(sessionId, ...terms.map((term) => `%${term}%`)) as Turn[];
+  const words = (text: string) => new Set(text.toLowerCase().match(/[a-z0-9]{3,}/g) ?? []);
+  return rows
+    .sort((a, b) => {
+      const score = (turn: Turn) => {
+        const turnWords = words(turn.text);
+        return terms.reduce((n, term) => n + Number(turnWords.has(term)), 0);
+      };
+      return score(b) - score(a) || b.ts.localeCompare(a.ts);
+    })
+    .slice(0, limit)
+    .sort((a, b) => a.ts.localeCompare(b.ts));
+}
+
 /** Turns across all sessions within [start, end]. */
 export function turnsInRange(start: string, end: string, limit = 40): Turn[] {
   return db.prepare("SELECT * FROM turns WHERE ts BETWEEN ? AND ? ORDER BY ts ASC LIMIT ?").all(start, end, limit) as Turn[];
