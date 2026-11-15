@@ -1,6 +1,6 @@
-# Temporal Memory Agent
+# Kitty
 
-Chat agent with one tool (`web_search`) and orchestrator-driven temporal memory.
+Kitty is a chat agent with one tool (`web_search`) and orchestrator-driven temporal memory.
 Node + TS + Express · React (Vite) · Gemini (flash-lite) · Tavily · SQLite.
 
 ```bash
