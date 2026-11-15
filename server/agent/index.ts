@@ -8,7 +8,7 @@ import { extract } from "./extractor.js";
 export type AgentEvent =
   | { type: "plan"; data: { intent: Plan["intent"]; entities: string[]; dateRange: [string, string] | null } }
   | { type: "memory"; data: { turnCount: number; claimCount: number } }
-  | { type: "tool"; data: { query: string; results: { title: string; url: string; published_at: string | null }[] } }
+  | { type: "tool"; data: { query: string; results?: { title: string; url: string; published_at: string | null }[] } }
   | { type: "token"; data: { text: string } }
   | { type: "done"; data: { turnId: string } }
   | { type: "error"; data: { message: string } };
@@ -33,7 +33,12 @@ export async function runAgent(args: { sessionId: string; userMessage: string; o
       plan, memoryBlock, history, userMessage, allowRecall,
       onToken: (text) => onEvent({ type: "token", data: { text } }),
       onSearch: (query, results) =>
-        onEvent({ type: "tool", data: { query, results: results.map(({ title, url, published_at }) => ({ title, url, published_at })) } }),
+        onEvent({
+          type: "tool",
+          data: results
+            ? { query, results: results.map(({ title, url, published_at }) => ({ title, url, published_at })) }
+            : { query },
+        }),
     });
 
   let out = await run(pre.block, true);

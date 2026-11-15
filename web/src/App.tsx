@@ -11,11 +11,13 @@ import {
 } from "@/components/agents/message";
 import { MessageBubble, MessageBubbleContent } from "@/components/agents/message-bubble";
 import { StreamingResponse } from "@/components/agents/streaming-response";
+import { AgentActivity } from "@/components/agents/agent-activity";
 import { MessageScroller } from "@/components/agents/message-scroller";
 import { PromptInput } from "@/components/agents/prompt-input";
 
 type Source = { query: string; title: string; url: string; published_at: string | null };
-type Msg = { role: "user" | "assistant"; text: string; sources?: Source[] };
+type SearchActivity = { id: string; type: "search"; query: string; results?: { id: string; title: string; domain: string; url: string }[] };
+type Msg = { role: "user" | "assistant"; text: string; sources?: Source[]; activity?: SearchActivity[] };
 
 const SID_KEY = "agent.sessionId";
 
@@ -57,9 +59,27 @@ export function App() {
           const event = /^event: (.+)$/m.exec(raw)?.[1];
           const data = JSON.parse(/^data: (.+)$/m.exec(raw)?.[1] ?? "{}");
           if (event === "tool") {
-            searches++;
-            setStatus(`Searching ${searches} ${searches === 1 ? "query" : "queries"}…`);
-            patchLast((m) => ({ ...m, sources: [...(m.sources ?? []), ...data.results.map((r: Omit<Source, "query">) => ({ ...r, query: data.query }))] }));
+            if (!data.results) {
+              searches++;
+              setStatus(`Searching ${searches} ${searches === 1 ? "query" : "queries"}…`);
+              patchLast((m) => ({ ...m, activity: [...(m.activity ?? []), { id: `search-${(m.activity ?? []).length}`, type: "search", query: data.query }] }));
+            } else {
+              patchLast((m) => {
+                const activity = [...(m.activity ?? [])];
+                const pending = activity.find((item) => item.query === data.query && !item.results);
+                if (pending) pending.results = data.results.map((result: Omit<Source, "query" | "published_at">) => ({
+                  id: result.url,
+                  title: result.title,
+                  domain: new URL(result.url).hostname,
+                  url: result.url,
+                }));
+                return {
+                  ...m,
+                  activity,
+                  sources: [...(m.sources ?? []), ...data.results.map((r: Omit<Source, "query">) => ({ ...r, query: data.query }))],
+                };
+              });
+            }
           } else if (event === "token") {
             setStatus("Writing…");
             patchLast((m) => ({ ...m, text: m.text + data.text }));
@@ -97,6 +117,15 @@ export function App() {
                     <MessageBubbleContent>{m.text}</MessageBubbleContent>
                   </MessageBubble>
                 ) : (
+                  <>
+                  {!!m.activity?.length && <AgentActivity
+                    items={m.activity}
+                    contentType="search"
+                    status={busy && i === msgs.length - 1 ? "working" : "complete"}
+                    activeLabel="Searching the web…"
+                    summary="Web search complete"
+                    className="mb-2"
+                  />}
                   <StreamingResponse
                     status={busy && i === msgs.length - 1 ? "streaming" : m.text.includes("\n[Error:") ? "error" : "complete"}
                     copyText={m.text}
@@ -112,6 +141,7 @@ export function App() {
                   >
                     {m.text || (busy && i === msgs.length - 1 ? <MessageTyping label="Kitty is responding" /> : null)}
                   </StreamingResponse>
+                  </>
                 )}
               </MessageContent>
             </Message>

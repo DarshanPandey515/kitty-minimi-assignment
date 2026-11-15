@@ -30,7 +30,7 @@ export async function synthesize(args: {
   userMessage: string;
   allowRecall: boolean;
   onToken: (t: string) => void;
-  onSearch: (q: string, results: SearchResult[]) => void;
+  onSearch: (q: string, results?: SearchResult[]) => void;
 }): Promise<{ text: string; needRecall?: string }> {
   const contents: any[] = [
     ...args.history.map((t) => ({ role: t.role === "assistant" ? "model" : "user", parts: [{ text: t.text }] })),
@@ -78,6 +78,7 @@ export async function synthesize(args: {
         let results: SearchResult[] = [];
         if (call.name === "web_search" && q && searches < MAX_SEARCHES) {
           searches++;
+          args.onSearch(q);
           results = await webSearch(q);
           args.onSearch(q, results);
         }
