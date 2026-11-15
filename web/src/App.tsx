@@ -122,8 +122,8 @@ export function App() {
                     items={m.activity}
                     contentType="search"
                     status={busy && i === msgs.length - 1 ? "working" : "complete"}
-                    activeLabel="Searching the web…"
-                    summary="Web search complete"
+                    activeLabel={m.activity.at(-1)?.query ? `Searching “${m.activity.at(-1)?.query}”…` : "Searching the web…"}
+                    summary={`${m.activity.map((item) => item.query).join(" · ")} · ${m.sources?.length ?? 0} sources`}
                     className="mb-2"
                   />}
                   <StreamingResponse
