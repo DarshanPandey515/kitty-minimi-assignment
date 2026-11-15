@@ -101,6 +101,7 @@ export function App() {
                     status={busy && i === msgs.length - 1 ? "streaming" : m.text.includes("\n[Error:") ? "error" : "complete"}
                     copyText={m.text}
                     announce={false}
+                    showFeedback={false}
                     sources={m.sources?.map((source, index) => ({
                       id: `${index}-${source.url}`,
                       title: source.title,

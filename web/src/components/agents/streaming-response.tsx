@@ -66,6 +66,8 @@ export interface StreamingResponseProps {
   announce?: boolean;
   /** Hides the built-in completion actions without changing response status. */
   showActions?: boolean;
+  /** Hides helpful and not-helpful feedback buttons. */
+  showFeedback?: boolean;
   /** Override any built-in string. `{count}` fills `source` (one) and `sources` (many). */
   labels?: Partial<StreamingResponseMessages>;
   className?: string;
@@ -122,6 +124,7 @@ export function StreamingResponse({
   onFeedbackChange,
   announce = true,
   showActions = true,
+  showFeedback = true,
   labels,
   className,
   contentClassName,
@@ -221,7 +224,7 @@ export function StreamingResponse({
                   <RotateCcw className="size-3.5" />
                 </ResponseAction>
               ) : null}
-              {complete ? (
+              {complete && showFeedback ? (
                 <>
                   <ResponseAction
                     label={t("helpful")}
