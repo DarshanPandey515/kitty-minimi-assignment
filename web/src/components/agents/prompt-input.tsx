@@ -1,7 +1,7 @@
 "use client";
 // beui.dev/components/agents/chat-app
 
-import { ArrowUp, Plus, Square } from "lucide-react";
+import { Plus, Square } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   type FormEvent,
@@ -29,6 +29,7 @@ import {
 import { SPRING_SWAP } from "@/lib/ease";
 import { useMessages } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import PixelCat from "@/components/kitty-avatar/avatar";
 
 /** English defaults. Override per instance with `labels`, or app-wide with `LocaleProvider`. */
 export const promptInputMessages = {
@@ -316,11 +317,12 @@ export function PromptInput({
 
         <Button
           type={loading ? "button" : "submit"}
+          variant="ghost"
           size="icon"
           disabled={loading ? !onStop : !canSubmit}
           aria-label={loading ? t("stop") : t("send")}
           onClick={loading ? onStop : undefined}
-          className="ml-auto size-8 rounded-full"
+          className="ml-auto size-8 rounded-full bg-transparent p-0 hover:bg-transparent disabled:opacity-100"
         >
           <AnimatePresence initial={false} mode="popLayout">
             <motion.span
@@ -334,7 +336,7 @@ export function PromptInput({
               {loading ? (
                 <Square className="size-3 fill-current" />
               ) : (
-                <ArrowUp className="size-4" />
+                <PixelCat className="size-5" />
               )}
             </motion.span>
           </AnimatePresence>
