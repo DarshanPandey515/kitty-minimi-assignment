@@ -1,0 +1,242 @@
+{
+  "comparison": "SQL-only baseline vs MiniLM hybrid on the same corpus",
+  "corpus": "memory-eval.corpus.json",
+  "cases": [
+    {
+      "id": "ram-ddr5-price",
+      "type": "semantic",
+      "sql": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 0.5,
+        "latencyMs": 0.3
+      },
+      "minilm": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 1,
+        "latencyMs": 64.3
+      }
+    },
+    {
+      "id": "ram-ddr4-price",
+      "type": "semantic",
+      "sql": {
+        "hitAt8": 0,
+        "recallAt8": 0,
+        "mrr": 0,
+        "latencyMs": 0.2
+      },
+      "minilm": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 0.25,
+        "latencyMs": 59.8
+      }
+    },
+    {
+      "id": "ram-laptop-upgrade",
+      "type": "semantic",
+      "sql": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 0.5,
+        "latencyMs": 0.2
+      },
+      "minilm": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 0.5,
+        "latencyMs": 60.1
+      }
+    },
+    {
+      "id": "ram-november-10",
+      "type": "temporal",
+      "sql": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 1,
+        "latencyMs": 0.1
+      },
+      "minilm": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 1,
+        "latencyMs": 0.3
+      }
+    },
+    {
+      "id": "creator-audience",
+      "type": "semantic",
+      "sql": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 1,
+        "latencyMs": 0.2
+      },
+      "minilm": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 1,
+        "latencyMs": 62.2
+      }
+    },
+    {
+      "id": "creator-founder",
+      "type": "semantic",
+      "sql": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 0.5,
+        "latencyMs": 0.2
+      },
+      "minilm": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 0.3333333333333333,
+        "latencyMs": 64.1
+      }
+    },
+    {
+      "id": "creator-channel",
+      "type": "semantic",
+      "sql": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 1,
+        "latencyMs": 0.2
+      },
+      "minilm": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 1,
+        "latencyMs": 52.6
+      }
+    },
+    {
+      "id": "creator-november-12",
+      "type": "temporal",
+      "sql": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 1,
+        "latencyMs": 0.2
+      },
+      "minilm": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 1,
+        "latencyMs": 0.4
+      }
+    },
+    {
+      "id": "home-basil-care",
+      "type": "semantic",
+      "sql": {
+        "hitAt8": 0,
+        "recallAt8": 0,
+        "mrr": 0,
+        "latencyMs": 0.4
+      },
+      "minilm": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 0.16666666666666666,
+        "latencyMs": 57.8
+      }
+    },
+    {
+      "id": "home-bread-proof",
+      "type": "semantic",
+      "sql": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 1,
+        "latencyMs": 0.1
+      },
+      "minilm": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 1,
+        "latencyMs": 52
+      }
+    },
+    {
+      "id": "home-hike",
+      "type": "semantic",
+      "sql": {
+        "hitAt8": 0,
+        "recallAt8": 0,
+        "mrr": 0,
+        "latencyMs": 0.1
+      },
+      "minilm": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 0.5,
+        "latencyMs": 55.5
+      }
+    },
+    {
+      "id": "home-november-13",
+      "type": "temporal",
+      "sql": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 1,
+        "latencyMs": 0.1
+      },
+      "minilm": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 1,
+        "latencyMs": 0.2
+      }
+    }
+  ],
+  "byType": {
+    "semantic": {
+      "cases": 9,
+      "sql": {
+        "hitAt8": 0.667,
+        "recallAt8": 0.667,
+        "mrr": 0.5,
+        "latencyMs": {
+          "p50": 0.2,
+          "p95": 0.4
+        }
+      },
+      "minilm": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 0.639,
+        "latencyMs": {
+          "p50": 59.8,
+          "p95": 64.3
+        }
+      }
+    },
+    "temporal": {
+      "cases": 3,
+      "sql": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 1,
+        "latencyMs": {
+          "p50": 0.1,
+          "p95": 0.2
+        }
+      },
+      "minilm": {
+        "hitAt8": 1,
+        "recallAt8": 1,
+        "mrr": 1,
+        "latencyMs": {
+          "p50": 0.3,
+          "p95": 0.4
+        }
+      }
+    }
+  }
+}
