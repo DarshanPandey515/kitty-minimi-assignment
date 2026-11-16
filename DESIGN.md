@@ -907,10 +907,21 @@ Memory is context, not a tool. Code owns dates and recall; the model owns prose 
 
 ## 20. Hybrid conversation memory
 
-SQLite remains the source of truth for turns and claims. Qdrant (`kitty_turns_minilm384`) is a rebuildable index of turn embeddings, keyed by the SQLite turn UUID. Set `QDRANT_URL` to enable it; `docker compose up -d qdrant` starts the local service. Local `all-MiniLM-L6-v2` inference generates normalized 384-dimensional q8 vectors through Transformers.js and ONNX Runtime, pinned to a model revision. The first run downloads about 25 MB from Hugging Face; subsequent runs use the local cache.
+SQLite remains the source of truth for turns and claims. Qdrant (`kitty_turns_minilm384`) is a rebuildable index of turn embeddings, keyed by the SQLite turn UUID. Set `QDRANT_URL` to enable it; `docker compose up -d qdrant` starts the local service. Local `all-MiniLM-L6-v2` inference generates normalized 384-dimensional q8 vectors through Transformers.js and ONNX Runtime, pinned to a model revision. The first run downloads about 25 MB from Hugging Face into Kitty's user cache; subsequent runs use that cache.
 
 For semantic recall, Kitty embeds the query locally, queries Qdrant with a required session filter and an optional timestamp range, merges ranked IDs with reciprocal rank fusion, and hydrates the top eight from SQLite. Session-scoped lexical and optional temporal SQLite queries remain available when MiniLM or Qdrant fails. Pure date recall uses the SQLite date range directly and does not load the model.
 
 Every inserted turn gets `embedding_status='pending'` in the same SQLite insert. SQLite records the embedding model used for each indexed turn. A single bounded in-process worker handles up to eight pending turns per poll, embeds and upserts by turn UUID, marks successful rows indexed, and persists retry times with capped backoff. Existing rows are queued for MiniLM reindexing after startup; recent turns remain available from SQLite while indexing catches up. The old `kitty_turns` Gemini collection is not queried by the new application.
 
-Retrieval logs report embedding, lexical, temporal, Qdrant, fusion and total milliseconds plus candidate counts. `npm run bench:memory -- path/to/cases.json` (or `MEMORY_EVAL_FILE=... npm run bench:memory`) compares SQL-only and hybrid Hit@8, Recall@8, MRR and p50/p95 retrieval latency, reported separately for semantic and pure temporal cases. Hit@8 indicates whether any labeled relevant turn was retrieved; Recall@8 measures coverage of all labeled relevant turns; MRR measures the rank of the first relevant result in the actual returned order. The runner validates that every labeled turn exists in the stated session before measuring. Start with `scripts/memory-eval.example.json`, replace placeholders with real session/turn IDs, and run with Qdrant configured. Commit the baseline and post-migration output under `bench/` before recording benchmark numbers here.
+Retrieval logs report embedding, lexical, temporal, Qdrant, fusion and total milliseconds plus candidate counts. `npm run bench:memory -- path/to/cases.json` compares SQL-only and MiniLM hybrid Hit@8, Recall@8, MRR and p50/p95 retrieval latency, separately for semantic and pure temporal cases. Hit@8 indicates whether any labeled relevant turn was retrieved; Recall@8 measures coverage of all labeled relevant turns; MRR measures the rank of the first relevant result in the actual returned order. The runner validates every labeled turn against its session before measuring. `scripts/seed-memory-eval.ts` seeds the committed synthetic corpus and indexes it in Qdrant; it refuses to overwrite an existing database without `--reset`.
+
+The pre-migration Gemini figures could not be reproduced against the current database. This comparison therefore uses SQL-only as the baseline and MiniLM hybrid on the same seeded corpus. The committed raw report is `bench/baseline-2026-11-16.json`.
+
+| Query type | Cases | Retrieval | Hit@8 | Recall@8 | MRR | p50 / p95 (ms) |
+| --- | ---: | --- | ---: | ---: | ---: | ---: |
+| Semantic | 9 | SQL-only | 0.667 | 0.667 | 0.500 | 0.2 / 0.4 |
+| Semantic | 9 | MiniLM hybrid | 1.000 | 1.000 | 0.639 | 59.8 / 64.3 |
+| Temporal | 3 | SQL-only | 1.000 | 1.000 | 1.000 | 0.1 / 0.2 |
+| Temporal | 3 | MiniLM hybrid | 1.000 | 1.000 | 1.000 | 0.3 / 0.4 |
+
+The corpus has 12 synthetic cases, so these results are an initial reproducible check rather than a broad quality claim. Semantic Hit@8 and Recall@8 improved on this corpus; the `creator-founder` case had lower MRR with MiniLM (0.333 versus 0.500) despite both methods retrieving a relevant turn. Temporal retrieval remained accurate with sub-millisecond SQL latency.
