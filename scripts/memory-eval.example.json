@@ -1,16 +1,285 @@
 [
   {
-    "sessionId": "replace-with-session-id",
-    "query": "What was the desktop memory kit price we discussed?",
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "What was the RAM price I asked about?",
     "intent": "recall",
     "dateRange": null,
-    "relevantTurnIds": ["replace-with-relevant-turn-id"]
+    "relevantTurnIds": [
+      "f691328b-bf33-439e-88aa-cb3651fefc2d"
+    ]
   },
   {
-    "sessionId": "replace-with-session-id",
-    "query": "What did I ask on November 15?",
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "Did I ever ask about RAM prices?",
     "intent": "recall",
-    "dateRange": ["2026-11-15T00:00:00.000Z", "2026-11-15T23:59:59.999Z"],
-    "relevantTurnIds": ["replace-with-relevant-turn-id"]
+    "dateRange": null,
+    "relevantTurnIds": [
+      "f691328b-bf33-439e-88aa-cb3651fefc2d",
+      "acd41205-4f82-4cbd-8bd0-5a33485115af",
+      "f6a02e6a-49a6-4db3-ad8c-9fdb937971a3",
+      "b2ccadfb-8766-43cd-8371-15634029e116",
+      "d725e7f3-79d5-4f4e-a0d0-b459bc897a16",
+      "41feaca5-c689-4cb0-ab13-7cb57dd112f5"
+    ]
+  },
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "When did I last ask about RAM pricing?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": [
+      "41feaca5-c689-4cb0-ab13-7cb57dd112f5"
+    ]
+  },
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "Has RAM pricing changed since I asked before?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": [
+      "acd41205-4f82-4cbd-8bd0-5a33485115af",
+      "1fa07ba8-ce9b-47d9-b3a9-071b267a0e0f",
+      "b2ccadfb-8766-43cd-8371-15634029e116",
+      "d725e7f3-79d5-4f4e-a0d0-b459bc897a16",
+      "41feaca5-c689-4cb0-ab13-7cb57dd112f5"
+    ]
+  },
+
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "What did I ask about Anvilly?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": [
+      "4fe6fe0e-4a16-4d81-9e82-d12a7741f322",
+      "e6a83c69-7648-4508-b6fb-b663fdf73c42",
+      "e06a94fb-7863-49aa-8d30-63f965d63408",
+      "f4493d6a-2ca3-45a8-a896-2e1863b6b2d3",
+      "f8a477ef-0cd3-4002-844c-76baa080f168"
+    ]
+  },
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "Did I ask who built Anvilly?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": [
+      "4fe6fe0e-4a16-4d81-9e82-d12a7741f322"
+    ]
+  },
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "What was Anvilly about?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": [
+      "71001030-5176-4f6f-88e2-a1dccc21b63d"
+    ]
+  },
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "Did I ask anything about the AI app generator?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": [
+      "71001030-5176-4f6f-88e2-a1dccc21b63d"
+    ]
+  },
+
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "Who founded 100xSchool?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": [
+      "ff6e882d-e1ec-41d2-a0ab-8af3938cb8a7",
+      "8504189a-2c7b-4329-b431-a171512a1384",
+      "e62aadf2-44e4-490f-bee8-7712ccc06ff0",
+      "ad70cf8c-584a-4036-bf85-928410f29bc5",
+      "19c09cfe-5d1b-4315-8411-f934035a50fc"
+    ]
+  },
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "Did I ask about 100xSchool?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": [
+      "ff6e882d-e1ec-41d2-a0ab-8af3938cb8a7",
+      "8504189a-2c7b-4329-b431-a171512a1384",
+      "43812d7e-cbbd-4d75-8ec0-82aca032f513",
+      "adbd264b-d8a0-42e7-a9c1-850d4d1f0c38",
+      "e62aadf2-44e4-490f-bee8-7712ccc06ff0",
+      "ad70cf8c-584a-4036-bf85-928410f29bc5",
+      "8437375d-1987-411b-920f-d45c5c4dfe7c",
+      "19c09cfe-5d1b-4315-8411-f934035a50fc"
+    ]
+  },
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "Who is Sameer and how is he connected to 100xSchool?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": [
+      "adbd264b-d8a0-42e7-a9c1-850d4d1f0c38",
+      "72eb7413-4e9d-42e9-9dde-9df99dd2893a"
+    ]
+  },
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "Did I ask about Sameer?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": [
+      "adbd264b-d8a0-42e7-a9c1-850d4d1f0c38",
+      "72eb7413-4e9d-42e9-9dde-9df99dd2893a"
+    ]
+  },
+
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "How many subscribers did Harkirat have?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": [
+      "0cbffde6-0b21-4d57-a3e1-9b35e7b6af65"
+    ]
+  },
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "What did I ask about Harkirat?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": [
+      "0cbffde6-0b21-4d57-a3e1-9b35e7b6af65",
+      "3fa7f701-7117-4f6e-abfc-6921ff9bea7f"
+    ]
+  },
+
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "What did I ask about PostgreSQL hosting?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": [
+      "d85d6ca8-5ea9-4703-bf2e-c7ec40376560"
+    ]
+  },
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "What was the database hosting pricing I asked about?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": [
+      "d85d6ca8-5ea9-4703-bf2e-c7ec40376560"
+    ]
+  },
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "How much were Neon and AWS Postgres hosting?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": [
+      "d85d6ca8-5ea9-4703-bf2e-c7ec40376560"
+    ]
+  },
+
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "What did I ask you around 5:11 PM on November 15?",
+    "intent": "recall",
+    "dateRange": [
+      "2026-11-15T17:11:00.000Z",
+      "2026-11-15T17:12:00.000Z"
+    ],
+    "relevantTurnIds": [
+      "0cbffde6-0b21-4d57-a3e1-9b35e7b6af65"
+    ]
+  },
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "What did I ask at 17:11:23?",
+    "intent": "recall",
+    "dateRange": [
+      "2026-11-15T17:11:00.000Z",
+      "2026-11-15T17:12:00.000Z"
+    ],
+    "relevantTurnIds": [
+      "0cbffde6-0b21-4d57-a3e1-9b35e7b6af65"
+    ]
+  },
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "What did I ask around 6:58 PM?",
+    "intent": "recall",
+    "dateRange": [
+      "2026-11-15T18:58:00.000Z",
+      "2026-11-15T18:59:00.000Z"
+    ],
+    "relevantTurnIds": [
+      "d85d6ca8-5ea9-4703-bf2e-c7ec40376560"
+    ]
+  },
+
+  {
+    "sessionId": "7add2b9f-f49e-4707-b015-7d6cbe5d9a41",
+    "query": "What did I ask you on November 15?",
+    "intent": "recall",
+    "dateRange": [
+      "2026-11-15T00:00:00.000Z",
+      "2026-11-15T23:59:59.999Z"
+    ],
+    "relevantTurnIds": [
+      "53c7ddf8-7569-4d4a-8db3-af623ffb07c0",
+      "f691328b-bf33-439e-88aa-cb3651fefc2d",
+      "acd41205-4f82-4cbd-8bd0-5a33485115af",
+      "03ec7ffa-8e5f-4e9d-8c22-94feec067e1f",
+      "bf871663-292e-4dc7-bcfe-b4c23501f754",
+      "4011b9c2-b679-4bcf-9c46-cbda74b587b5",
+      "94c300e5-d76f-4941-b1f5-2d60c921a225",
+      "45d879a7-f7b5-45c7-816f-7f9dae713e5c",
+      "85aa3f34-359b-453b-a46f-25bc0dc8bf94",
+      "c14c922a-2082-41d5-826e-fec1b7ad53c1",
+      "fb3ccd68-1fec-427b-8471-6e6151b37570",
+      "1fa07ba8-ce9b-47d9-b3a9-071b267a0e0f",
+      "ff6e882d-e1ec-41d2-a0ab-8af3938cb8a7",
+      "8504189a-2c7b-4329-b431-a171512a1384",
+      "43812d7e-cbbd-4d75-8ec0-82aca032f513",
+      "adbd264b-d8a0-42e7-a9c1-850d4d1f0c38",
+      "72eb7413-4e9d-42e9-9dde-9df99dd2893a",
+      "e62aadf2-44e4-490f-bee8-7712ccc06ff0",
+      "ad70cf8c-584a-4036-bf85-928410f29bc5",
+      "f6a02e6a-49a6-4db3-ad8c-9fdb937971a3",
+      "4fe6fe0e-4a16-4d81-9e82-d12a7741f322",
+      "71001030-5176-4f6f-88e2-a1dccc21b63d",
+      "2ee9a16b-9e36-4467-ae0f-0173726fcaff",
+      "ce03799c-278b-48ba-9ce8-f5ee9ea0063e",
+      "ca6c789c-3a94-449f-9fc9-e93a180d2736",
+      "420a012b-6323-4103-9251-9131c36e895f",
+      "6d13faf7-cf57-4a95-8925-ff2e9d23e8a1",
+      "e6a83c69-7648-4508-b6fb-b663fdf73c42",
+      "e06a94fb-7863-49aa-8d30-63f965d63408",
+      "8437375d-1987-411b-920f-d45c5c4dfe7c",
+      "f610535c-6381-4577-8cbc-896eddaa97d8",
+      "b2ccadfb-8766-43cd-8371-15634029e116",
+      "d725e7f3-79d5-4f4e-a0d0-b459bc897a16",
+      "19c09cfe-5d1b-4315-8411-f934035a50fc",
+      "0cbffde6-0b21-4d57-a3e1-9b35e7b6af65",
+      "dd6f083d-88c6-4028-892b-6185505496b0",
+      "41feaca5-c689-4cb0-ab13-7cb57dd112f5",
+      "729123b4-0a33-485d-8ac0-dad443c5740c",
+      "0804e2c1-70e3-4554-8b6b-ddbc7a844674",
+      "9892fcae-bfbe-44f8-98de-1f426ce67d05",
+      "4fd6a068-e414-44f3-84b9-3918303fdedb",
+      "3cb7b52a-1bce-47bc-a97e-b77519fce12c",
+      "49366171-a006-43be-bd4a-a7d70dcb84db",
+      "99410bcd-b9ec-4314-b1b8-eb65760612d9",
+      "f8a477ef-0cd3-4002-844c-76baa080f168",
+      "279299a6-84a0-4be7-9983-215d0b3d7fc8",
+      "f4493d6a-2ca3-45a8-a896-2e1863b6b2d3",
+      "23ac3e38-e82c-4c33-8dc8-7ac6fd72304f",
+      "3fa7f701-7117-4f6e-abfc-6921ff9bea7f",
+      "d85d6ca8-5ea9-4703-bf2e-c7ec40376560"
+    ]
   }
 ]

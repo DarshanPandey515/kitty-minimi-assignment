@@ -39,8 +39,10 @@ for (const [index, item] of cases.entries()) {
     process.exit(1);
   }
   const found = turnsByIds(item.sessionId, item.relevantTurnIds);
-  if (found.length !== item.relevantTurnIds.length) {
-    console.error(`Invalid benchmark case ${index + 1}: one or more relevantTurnIds are missing from session ${item.sessionId}. Replace the example placeholders with real IDs from the database.`);
+  const foundIds = new Set(found.map((turn) => turn.id));
+  const missing = item.relevantTurnIds.filter((id) => !foundIds.has(id));
+  if (missing.length) {
+    console.error(`Invalid benchmark case ${index + 1}: missing IDs in session ${item.sessionId}:\n${missing.join("\n")}`);
     process.exit(1);
   }
 }
