@@ -1,7 +1,6 @@
+import "dotenv/config";
 import { readFileSync } from "node:fs";
 import { performance } from "node:perf_hooks";
-import { searchTurns, turnsInRange } from "../server/db/queries.js";
-import { retrieveMemory } from "../server/agent/memory.js";
 
 type Case = {
   sessionId: string;
@@ -11,9 +10,29 @@ type Case = {
   relevantTurnIds: string[];
 };
 
-const path = process.env.MEMORY_EVAL_FILE;
-if (!path) throw new Error("Set MEMORY_EVAL_FILE to a JSON file of labeled recall cases");
-const cases = JSON.parse(readFileSync(path, "utf8")) as Case[];
+const fixturePath = process.env.MEMORY_EVAL_FILE ?? process.argv[2];
+if (!fixturePath) {
+  console.error("Usage: npm run bench:memory -- <labeled-cases.json>\nOr set MEMORY_EVAL_FILE. See scripts/memory-eval.example.json.");
+  process.exit(1);
+}
+if (!process.env.GEMINI_API_KEY || !process.env.QDRANT_URL) {
+  console.error("Set GEMINI_API_KEY and QDRANT_URL in .env before running the hybrid memory benchmark.");
+  process.exit(1);
+}
+
+let cases: Case[];
+try {
+  cases = JSON.parse(readFileSync(fixturePath, "utf8")) as Case[];
+  if (!Array.isArray(cases) || cases.length === 0) throw new Error("expected a non-empty JSON array");
+} catch (error) {
+  console.error(`Cannot load benchmark cases from ${fixturePath}: ${(error as Error).message}`);
+  process.exit(1);
+}
+
+const [{ searchTurns, turnsInRange }, { retrieveMemory }] = await Promise.all([
+  import("../server/db/queries.js"),
+  import("../server/agent/memory.js"),
+]);
 const metrics = { sql: { recall: [] as number[], latency: [] as number[] }, hybrid: { recall: [] as number[], latency: [] as number[] } };
 
 for (const item of cases) {
