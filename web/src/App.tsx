@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Cat, MessageSquare, Plus, Trash2 } from "lucide-react";
+import { MessageSquare, Plus, Trash2 } from "lucide-react";
 import { ChatApp } from "@/components/agents/chat-app";
 import {
   Message,
@@ -273,9 +273,6 @@ export function App() {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h1 className="font-semibold tracking-tighter">Kitty</h1>
-                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                  online
-                </span>
               </div>
               <p className="mt-1 text-xs leading-snug text-muted-foreground">
                 A curious, context-aware assistant. She searches before she speaks.
@@ -322,7 +319,7 @@ export function App() {
           {msgs.length === 0 ? (
             <div className="grid h-full place-content-center justify-items-center gap-3 text-center">
               <span className="grid size-10 place-items-center rounded-2xl bg-primary text-primary-foreground">
-                <Cat className="size-5" />
+                <PixelCat className="w-7" />
               </span>
               <div>
                 <p className="font-medium">What’s on your mind?</p>
@@ -336,7 +333,7 @@ export function App() {
               <Message key={i} from={m.role} animateIn={i >= msgs.length - 2}>
                 {m.role === "assistant" && (
                   <MessageAvatar className="bg-muted">
-                    <Cat />
+                    <PixelCat className="w-5" />
                   </MessageAvatar>
                 )}
                 <MessageContent>
