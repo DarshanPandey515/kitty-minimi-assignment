@@ -1,9 +1,11 @@
 import "dotenv/config";
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { scoreRetrieval, type RetrievalMetrics } from "./retrieval-metrics.js";
 
 type Case = {
+  id?: string;
   sessionId: string;
   query: string;
   intent: "recall" | "temporal_delta";
@@ -11,7 +13,11 @@ type Case = {
   relevantTurnIds: string[];
 };
 
-const fixturePath = process.env.MEMORY_EVAL_FILE ?? process.argv[2];
+const args = process.argv.slice(2);
+const outputArg = args.indexOf("--output");
+const fixturePath = process.env.MEMORY_EVAL_FILE ?? args.find((arg, index) => !arg.startsWith("--") && !(outputArg >= 0 && index === outputArg + 1));
+const outputPath = process.env.MEMORY_BENCH_OUTPUT ?? (outputArg >= 0 ? args[outputArg + 1] : undefined);
+if (outputArg >= 0 && !outputPath) throw new Error("--output requires a file path");
 if (!fixturePath) {
   console.error("Usage: npm run bench:memory -- <labeled-cases.json>\nOr set MEMORY_EVAL_FILE. See scripts/memory-eval.example.json.");
   process.exit(1);
@@ -23,14 +29,25 @@ if (!process.env.QDRANT_URL) {
 
 let cases: Case[];
 try {
-  cases = JSON.parse(readFileSync(fixturePath, "utf8")) as Case[];
-  if (!Array.isArray(cases) || cases.length === 0) throw new Error("expected a non-empty JSON array");
+  const parsed = JSON.parse(readFileSync(fixturePath, "utf8")) as Case[] | {
+    sessions: Record<string, { id: string }>;
+    cases: { id: string; session: string; query: string; type: "semantic" | "temporal"; dateRange?: [string, string]; relevantTurnIds: string[] }[];
+  };
+  cases = Array.isArray(parsed) ? parsed : parsed.cases.map((item) => ({
+    id: item.id,
+    sessionId: parsed.sessions[item.session]?.id ?? item.session,
+    query: item.query,
+    intent: "recall",
+    dateRange: item.dateRange ?? null,
+    relevantTurnIds: item.relevantTurnIds,
+  }));
+  if (!cases.length) throw new Error("expected a non-empty case list");
 } catch (error) {
   console.error(`Cannot load benchmark cases from ${fixturePath}: ${(error as Error).message}`);
   process.exit(1);
 }
 
-const [{ searchTurns, turnsInRange, turnsByIds }, { retrieveMemory }] = await Promise.all([
+const [{ searchTurns, turnsInRange, turnsByIds }, { retrieveMemory, warmupMemoryModel }] = await Promise.all([
   import("../server/db/queries.js"),
   import("../server/agent/memory.js"),
 ]);
@@ -47,13 +64,19 @@ for (const [index, item] of cases.entries()) {
     process.exit(1);
   }
 }
+await warmupMemoryModel();
+for (const item of cases) {
+  if (!(item.intent === "recall" && item.dateRange)) searchTurns(item.sessionId, item.query, 24);
+  if (item.dateRange) turnsInRange(item.sessionId, ...item.dateRange, 24);
+}
 
 type Metrics = { hitAt8: number[]; recallAt8: number[]; mrr: number[]; latency: number[] };
-const metrics: Record<string, { sql: Metrics; hybrid: Metrics }> = {};
+const metrics: Record<string, { sql: Metrics; minilm: Metrics }> = {};
+const caseResults: object[] = [];
 
-for (const item of cases) {
+for (const [index, item] of cases.entries()) {
   const type = item.intent === "recall" && item.dateRange ? "temporal" : "semantic";
-  const group = metrics[type] ??= { sql: newMetrics(), hybrid: newMetrics() };
+  const group = metrics[type] ??= { sql: newMetrics(), minilm: newMetrics() };
   const start = performance.now();
   const sqlLexical = item.intent === "recall" && item.dateRange
     ? []
@@ -61,19 +84,35 @@ for (const item of cases) {
   const sqlTemporal = item.dateRange ? turnsInRange(item.sessionId, ...item.dateRange, 24) : [];
   const sql = [...new Map([...sqlLexical, ...sqlTemporal].map((turn) => [turn.id, turn])).values()].slice(0, 8);
   group.sql.latency.push(performance.now() - start);
-  recordMetrics(group.sql, scoreRetrieval(sql.map((turn) => turn.id), item.relevantTurnIds));
+  const sqlScore = scoreRetrieval(sql.map((turn) => turn.id), item.relevantTurnIds);
+  recordMetrics(group.sql, sqlScore);
 
   const hybridStart = performance.now();
   const hybrid = await retrieveMemory({ ...item, limit: 8 });
-  group.hybrid.latency.push(performance.now() - hybridStart);
-  recordMetrics(group.hybrid, scoreRetrieval(hybrid.map((turn) => turn.id), item.relevantTurnIds));
+  const hybridLatency = performance.now() - hybridStart;
+  const minilmScore = scoreRetrieval(hybrid.map((turn) => turn.id), item.relevantTurnIds);
+  group.minilm.latency.push(hybridLatency);
+  recordMetrics(group.minilm, minilmScore);
+  caseResults.push({
+    id: item.id ?? `case-${index + 1}`,
+    type,
+    sql: { ...sqlScore, latencyMs: Number((group.sql.latency.at(-1) ?? 0).toFixed(1)) },
+    minilm: { ...minilmScore, latencyMs: Number(hybridLatency.toFixed(1)) },
+  });
 }
 
-console.log(JSON.stringify({ cases: cases.length, byType: Object.fromEntries(Object.entries(metrics).map(([type, group]) => [type, {
+const report = { comparison: "SQL-only baseline vs MiniLM hybrid on the same corpus", corpus: path.basename(fixturePath), cases: caseResults, byType: Object.fromEntries(Object.entries(metrics).map(([type, group]) => [type, {
   cases: group.sql.hitAt8.length,
   sql: summarize(group.sql),
-  hybrid: summarize(group.hybrid),
-}])) }, null, 2));
+  minilm: summarize(group.minilm),
+}])) };
+const reportJson = `${JSON.stringify(report, null, 2)}\n`;
+console.log(reportJson);
+if (outputPath) {
+  const resolvedOutput = path.resolve(outputPath);
+  mkdirSync(path.dirname(resolvedOutput), { recursive: true });
+  writeFileSync(resolvedOutput, reportJson);
+}
 
 function newMetrics(): Metrics {
   return { hitAt8: [], recallAt8: [], mrr: [], latency: [] };

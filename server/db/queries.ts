@@ -28,10 +28,17 @@ export function deleteSession(id: string) {
   return remove();
 }
 
-export function insertTurn(sessionId: string, role: Turn["role"], text: string): Turn {
-  const t: Turn = { id: randomUUID(), session_id: sessionId, ts: new Date().toISOString(), role, text, entities_json: "[]" };
+function saveTurn(t: Turn): Turn {
   db.prepare("INSERT INTO turns (id, session_id, ts, role, text, entities_json) VALUES (@id, @session_id, @ts, @role, @text, @entities_json)").run(t);
   return t;
+}
+
+export function insertTurn(sessionId: string, role: Turn["role"], text: string): Turn {
+  return insertTurnWithId(sessionId, role, text, randomUUID(), new Date().toISOString());
+}
+
+export function insertTurnWithId(sessionId: string, role: Turn["role"], text: string, id: string, ts: string): Turn {
+  return saveTurn({ id, session_id: sessionId, ts, role, text, entities_json: "[]" });
 }
 
 export function getTurn(id: string): Turn | undefined {

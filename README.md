@@ -45,7 +45,7 @@ flowchart TD
     Evidence --> Response[Existing answer flow]
 ```
 
-SQLite is canonical. Qdrant is a rebuildable 384-dimensional MiniLM index; pending turns are indexed in the background, and SQL retrieval remains available if MiniLM or Qdrant is unavailable. First startup downloads about 25 MB of model files; later startups use the local cache.
+SQLite is canonical. Qdrant is a rebuildable 384-dimensional MiniLM index; pending turns are indexed in the background, and SQL retrieval remains available if MiniLM or Qdrant is unavailable. First startup downloads about 25 MB of model files to Kitty's user cache; later startups use that cache.
 
 ## Requirements
 
@@ -77,9 +77,10 @@ Qdrant is configured for local development at `http://localhost:6333`. Leave `QD
 | `npm test` | Run unit tests |
 | `npm run build` | Build the production web app |
 | `npm start` | Run Express and serve the built app |
-| `npm run bench:memory -- path/to/cases.json` | Compare SQL-only and hybrid recall metrics on labeled cases |
+| `npm run seed:memory:eval -- [corpus.json] --reset` | Seed a fresh benchmark database and index its turns in Qdrant |
+| `npm run bench:memory -- path/to/cases.json --output path.json` | Compare SQL-only and MiniLM-hybrid recall metrics |
 
-The memory benchmark reports Hit@8, Recall@8, MRR, and p50/p95 latency for semantic and pure temporal cases. It requires `QDRANT_URL`, a running database, the local MiniLM model, and labeled turn IDs; see [`scripts/memory-eval.example.json`](scripts/memory-eval.example.json) for the case format.
+The memory benchmark reports per-case and aggregate Hit@8, Recall@8, MRR, and p50/p95 latency for semantic and pure temporal cases. Seed the committed synthetic corpus into a disposable database first, for example with `DB_PATH=/tmp/kitty-memory-eval.db npm run seed:memory:eval -- scripts/memory-eval.corpus.json --reset`, then pass the same `DB_PATH` to the benchmark. The seed script refuses to replace an existing database unless `--reset` is supplied.
 
 ## Configuration
 

@@ -28,6 +28,13 @@ test("indexed turns record their embedding model and leave the pending queue", (
   assert.equal(queries.pendingTurns(model).some((pending) => pending.id === turn.id), false);
 });
 
+test("benchmark seeding preserves explicit turn IDs and timestamps", () => {
+  queries.ensureSession("session-seed");
+  const turn = queries.insertTurnWithId("session-seed", "user", "seed text", "seed-turn-id", "2026-01-02T03:04:05.000Z");
+  assert.equal(turn.id, "seed-turn-id");
+  assert.equal(queries.getTurn(turn.id)?.ts, "2026-01-02T03:04:05.000Z");
+});
+
 test("conversation listing summarizes sessions and deletion removes their turns", () => {
   queries.ensureSession("session-delete");
   queries.insertTurn("session-delete", "user", "A conversation title");

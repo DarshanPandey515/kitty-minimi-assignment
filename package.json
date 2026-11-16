@@ -9,6 +9,7 @@
     "start": "tsx server/index.ts",
     "test": "node --import tsx --test server/time.test.ts server/agent/memory.test.ts server/db/queries.test.ts scripts/retrieval-metrics.test.ts",
     "bench:memory": "node --import tsx scripts/bench-memory.ts",
+    "seed:memory:eval": "node --import tsx scripts/seed-memory-eval.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
