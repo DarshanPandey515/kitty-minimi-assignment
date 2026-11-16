@@ -317,8 +317,8 @@ export function App() {
           contentClassName="mx-auto w-full max-w-3xl gap-5 p-4 sm:p-6"
         >
           {msgs.length === 0 ? (
-            <div className="grid h-full place-content-center justify-items-center gap-3 text-center">
-              <span className="grid size-10 place-items-center rounded-2xl bg-primary text-primary-foreground">
+            <div className="grid h-full place-content-center justify-items-center text-center">
+              <span className="grid size-10 place-items-center rounded-2xl text-primary-foreground">
                 <PixelCat className="w-7" />
               </span>
               <div>
