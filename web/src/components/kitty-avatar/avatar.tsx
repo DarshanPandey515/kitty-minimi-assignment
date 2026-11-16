@@ -93,3 +93,33 @@ function PixelCat({
 
 
 export default PixelCat;
+
+
+
+
+
+
+const PIXELS_CAT_FULL = [
+  "................",
+  "..##........##..",
+  "..####....####..",
+  "..#PP#....#PP#..",
+  "..#PPPP##PPPP#..",
+  ".#FFFFFFFFFFFF#.",
+  ".#FFEEFFFFEEFF#.",
+  ".#FFEWFFFFEWFF#.",
+  ".#FFFFFPPFFFFF#.",
+  ".#FFFFFPPFFFFF#.",
+  ".#FFFFFFFFFFFF#.",
+  "..#FFFFFFFFFF#..", // neck narrows
+  ".#FFFFFFFFFFFF#.", // shoulders / chest
+  ".#FFFFFFFFFFFF#.",
+  ".#FFFFFFFFFFFF#.",
+  ".#FFFFFFFFFFFF#.",
+  ".#FFFFFFFFFFFF#.",
+  ".#FFFFFFFFFFFF#.",
+  ".#FFFFFFFFFFFF#.",
+  ".#FFFFF##FFFFF#.", // front paw split
+  ".#FFFFF##FFFFF#.",
+  "..############..",
+];
