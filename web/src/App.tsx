@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { lazy, Suspense, useEffect, useState, useMemo } from "react";
 import { MessageSquare, Plus, Trash2 } from "lucide-react";
 import { ChatApp } from "@/components/agents/chat-app";
 import {
@@ -16,6 +16,8 @@ import { MessageScroller } from "@/components/agents/message-scroller";
 import { PromptInput } from "@/components/agents/prompt-input";
 import { AISidebar, type SidebarResource } from "@/components/agents/ai-sidebar";
 import PixelCat from "./components/kitty-avatar/avatar";
+
+const ReactMarkdown = lazy(() => import("react-markdown"));
 
 type Source = { query: string; title: string; url: string; published_at: string | null };
 type SearchActivity = {
@@ -323,10 +325,13 @@ export function App() {
                         }))}
                         contentClassName="px-1"
                       >
-                        {m.text ||
-                          (busy && i === msgs.length - 1 ? (
+                        {m.text ? (
+                          <Suspense fallback={null}>
+                            <ReactMarkdown>{m.text}</ReactMarkdown>
+                          </Suspense>
+                        ) : busy && i === msgs.length - 1 ? (
                             <MessageTyping label="Kitty is responding" />
-                          ) : null)}
+                          ) : null}
                       </StreamingResponse>
                     </>
                   )}
