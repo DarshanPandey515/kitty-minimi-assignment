@@ -1,14 +1,17 @@
 import { performance } from "node:perf_hooks";
-import { pipeline } from "@huggingface/transformers";
+import { homedir } from "node:os";
+import path from "node:path";
+import { env, pipeline } from "@huggingface/transformers";
 import { pendingTurns, retryTurnIndex, markTurnIndexed, searchTurns, turnsByIds, turnsInRange, type Turn } from "../db/queries.js";
 import { isInternalAssistantText } from "./prefetch.js";
 import { QdrantClient } from "@qdrant/js-client-rest";
 
 const MODEL = "Xenova/all-MiniLM-L6-v2";
 const MODEL_REVISION = "751bff37182d3f1213fa05d7196b954e230abad9";
-const EMBEDDING_VERSION = `${MODEL}@${MODEL_REVISION}:q8:mean-normalized`;
+export const EMBEDDING_VERSION = `${MODEL}@${MODEL_REVISION}:q8:mean-normalized`;
 const DIMENSIONS = 384;
 const COLLECTION = process.env.QDRANT_MINILM_COLLECTION ?? "kitty_turns_minilm384";
+env.cacheDir = path.join(process.env.XDG_CACHE_HOME ?? path.join(homedir(), ".cache"), "kitty", "transformers");
 const client = process.env.QDRANT_URL
   ? new QdrantClient({ url: process.env.QDRANT_URL, ...(process.env.QDRANT_API_KEY ? { apiKey: process.env.QDRANT_API_KEY } : {}) })
   : null;
@@ -25,7 +28,7 @@ function getExtractor(): Promise<Extractor> {
       if (info.status !== "progress") return;
       const { file, progress } = info;
       const step = Math.floor(progress / 10) * 10;
-      if (step >= 100 || step > (progressSteps.get(file) ?? -10)) {
+      if (step > (progressSteps.get(file) ?? -10)) {
         progressSteps.set(file, step);
         console.info(`[memory] model download ${file}: ${Math.min(step, 100)}%`);
       }
