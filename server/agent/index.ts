@@ -1,4 +1,4 @@
-import { ensureSession, insertTurn, lastEntities, lastTurns, claimsByEntityOrText, type Turn } from "../db/queries.js";
+import { ensureSession, insertTurn, lastEntities, lastTurns, claimsByEntityOrText, writeExtraction, type Turn } from "../db/queries.js";
 import { resolveRelative } from "../time.js";
 import { route, type Plan } from "./router.js";
 import { formatPriorTurn, isInternalAssistantText, prefetchWithStats } from "./prefetch.js";
@@ -23,6 +23,15 @@ export async function runAgent(args: { sessionId: string; userMessage: string; o
 
   const dateRange = resolveRelative(userMessage); // 2
   const plan = await route(userMessage, dateRange, lastEntities(sessionId)); // 3
+  if (plan.entities.length && plan.intent !== "recall" && plan.intent !== "temporal_delta") {
+    writeExtraction(currentTurn.id, plan.entities, plan.entities.map((entity) => ({
+      entity,
+      attribute: "conversation topic",
+      value: `User asked: ${userMessage}`,
+      source_url: null,
+      as_of: currentTurn.ts,
+    })));
+  }
   onEvent({ type: "plan", data: { intent: plan.intent, entities: plan.entities, dateRange: plan.date_range } });
 
   const pre = await prefetchWithStats(plan, sessionId); // 4

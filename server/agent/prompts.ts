@@ -33,6 +33,7 @@ export const EXTRACTOR_SYSTEM_PROMPT = `Extract durable factual claims a future 
 Return JSON only: {"entities":[string],"claims":[{"entity","attribute","value","source_url"|null,"as_of"?}]}
 
 - entities: named things discussed (products, companies, people), including ones only the user mentioned.
+- When a named thing was the topic of the user's question, include a claim with attribute "conversation topic" and a concise value that preserves what the user asked (for example, entity "Anvilly", value "User asked who built Anvilly"). These topic claims support later cross-thread recall.
 - source_url: only if a URL appears in the text; never invent one.
 - as_of: ISO date the claim was true; omit if unknown.
 

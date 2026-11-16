@@ -13,7 +13,10 @@ CREATE TABLE IF NOT EXISTS turns (
   embedding_status TEXT NOT NULL DEFAULT 'pending',
   embedding_attempts INTEGER NOT NULL DEFAULT 0,
   embedding_retry_at TEXT,
-  embedding_model TEXT
+  embedding_model TEXT,
+  extraction_status TEXT NOT NULL DEFAULT 'pending',
+  extraction_attempts INTEGER NOT NULL DEFAULT 0,
+  extraction_retry_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_turns_session_ts ON turns(session_id, ts);
 

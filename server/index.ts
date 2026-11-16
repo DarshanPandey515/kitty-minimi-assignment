@@ -5,6 +5,7 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { chatRouter } from "./routes/chat.js";
 import { startMemoryIndexWorker, warmupMemoryModel } from "./agent/memory.js";
+import { startClaimExtractionWorker } from "./agent/extractor.js";
 
 const app = express();
 app.use(express.json({ limit: "100kb" }));
@@ -22,4 +23,5 @@ app.listen(port, () => {
   console.info("[memory] First run downloads ~25 MB, subsequent runs load from cache.");
   void warmupMemoryModel().catch((err) => console.warn("[memory] MiniLM warm-up failed; SQL retrieval remains available:", (err as Error).message));
   startMemoryIndexWorker();
+  startClaimExtractionWorker();
 });

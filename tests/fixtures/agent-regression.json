@@ -1,0 +1,146 @@
+{
+  "asOf": "2026-11-16T12:00:00.000Z",
+  "sessions": {
+    "darshan-hardware": {
+      "user": "user-darshan",
+      "id": "e0000000-0000-4000-8000-000000000001",
+      "turns": [
+        { "id": "e1000000-0000-4000-8000-000000000001", "role": "user", "ts": "2026-10-02T09:00:00.000Z", "text": "I prefer quiet, compact keyboards with silent linear switches." },
+        { "id": "e1000000-0000-4000-8000-000000000002", "role": "assistant", "ts": "2026-10-02T09:00:10.000Z", "text": "Got it: compact keyboards and silent linear switches are your preference." },
+        { "id": "e1000000-0000-4000-8000-000000000003", "role": "user", "ts": "2026-10-04T14:10:00.000Z", "text": "For my desktop I use Ethernet, not Wi-Fi." },
+        { "id": "e1000000-0000-4000-8000-000000000004", "role": "assistant", "ts": "2026-10-04T14:10:12.000Z", "text": "Your desktop is connected through Ethernet." },
+        { "id": "e1000000-0000-4000-8000-000000000005", "role": "user", "ts": "2026-10-07T11:00:00.000Z", "text": "What was the 32GB DDR5-6000 kit price we discussed?" },
+        { "id": "e1000000-0000-4000-8000-000000000006", "role": "assistant", "ts": "2026-10-07T11:00:13.000Z", "text": "The example 32GB DDR5-6000 kit was $98." },
+        { "id": "e1000000-0000-4000-8000-000000000007", "role": "user", "ts": "2026-10-08T08:20:00.000Z", "text": "Correction: the RAM kit I bought was $108, not $98." },
+        { "id": "e1000000-0000-4000-8000-000000000008", "role": "assistant", "ts": "2026-10-08T08:20:11.000Z", "text": "Correction recorded: you bought the 32GB DDR5-6000 kit for $108; the earlier $98 was only an estimate." },
+        { "id": "e1000000-0000-4000-8000-000000000009", "role": "user", "ts": "2026-10-09T16:15:00.000Z", "text": "How much did the 32GB DDR4 kit cost?" },
+        { "id": "e1000000-0000-4000-8000-000000000010", "role": "assistant", "ts": "2026-10-09T16:15:10.000Z", "text": "The separate 32GB DDR4 kit was $52." },
+        { "id": "e1000000-0000-4000-8000-000000000011", "role": "user", "ts": "2026-10-12T12:00:00.000Z", "text": "What did we decide about the small form factor case and graphics card clearance?" },
+        { "id": "e1000000-0000-4000-8000-000000000012", "role": "assistant", "ts": "2026-10-12T12:00:14.000Z", "text": "Measure GPU length and leave clearance for its power connector in the small form factor case." },
+        { "id": "e1000000-0000-4000-8000-000000000013", "role": "user", "ts": "2026-10-15T10:00:00.000Z", "text": "I run Kitty's server on Node 24 and use SQLite as canonical storage." },
+        { "id": "e1000000-0000-4000-8000-000000000014", "role": "assistant", "ts": "2026-10-15T10:00:10.000Z", "text": "Project context: Kitty runs on Node 24 with SQLite as the source of truth." },
+        { "id": "e1000000-0000-4000-8000-000000000015", "role": "user", "ts": "2026-10-18T09:00:00.000Z", "text": "The green folder contains invoices; the blue folder contains trip notes." },
+        { "id": "e1000000-0000-4000-8000-000000000016", "role": "assistant", "ts": "2026-10-18T09:00:12.000Z", "text": "Green is invoices; blue is trip notes." }
+      ]
+    },
+    "darshan-followup": {
+      "user": "user-darshan",
+      "id": "e0000000-0000-4000-8000-000000000002",
+      "turns": [
+        { "id": "e2000000-0000-4000-8000-000000000001", "role": "user", "ts": "2026-10-20T10:00:00.000Z", "text": "For the Kitty project, should memory search stay session-scoped?" },
+        { "id": "e2000000-0000-4000-8000-000000000002", "role": "assistant", "ts": "2026-10-20T10:00:10.000Z", "text": "Turn retrieval is session-scoped; extracted claims are currently global." },
+        { "id": "e2000000-0000-4000-8000-000000000003", "role": "user", "ts": "2026-10-22T17:30:00.000Z", "text": "On October 22, I asked about MiniLM migration, then clarified the old Qdrant collection must not be used as fallback." },
+        { "id": "e2000000-0000-4000-8000-000000000004", "role": "assistant", "ts": "2026-10-22T17:30:12.000Z", "text": "October 22 memory event: MiniLM migration; the legacy Qdrant collection must not be used as fallback." },
+        { "id": "e2000000-0000-4000-8000-000000000005", "role": "user", "ts": "2026-10-24T08:00:00.000Z", "text": "For that migration, how should indexing recover after Qdrant is down?" },
+        { "id": "e2000000-0000-4000-8000-000000000006", "role": "assistant", "ts": "2026-10-24T08:00:15.000Z", "text": "Persist pending index work in SQLite and retry idempotently using turn IDs." },
+        { "id": "e2000000-0000-4000-8000-000000000007", "role": "user", "ts": "2026-10-26T13:30:00.000Z", "text": "Earlier you said MiniLM vectors are 768 dimensions, but that was wrong; the local model is 384 dimensions." },
+        { "id": "e2000000-0000-4000-8000-000000000008", "role": "assistant", "ts": "2026-10-26T13:30:12.000Z", "text": "Correction: local MiniLM vectors are 384 dimensions, not 768." }
+      ]
+    },
+    "postgres-historical": {
+      "user": "user-darshan",
+      "id": "e0000000-0000-4000-8000-000000000004",
+      "turns": [
+        { "id": "e4000000-0000-4000-8000-000000000001", "role": "user", "ts": "2026-10-30T10:00:00.000Z", "text": "What is the pricing for Postgres hosting?" },
+        { "id": "e4000000-0000-4000-8000-000000000002", "role": "assistant", "ts": "2026-10-30T10:00:20.000Z", "text": "Managed Postgres pricing varies widely depending on whether you choose a serverless/usage-based provider or a traditional fixed-node host. For side projects, entry-level paid tiers typically sit around $5 to $9 a month (like Heroku's basic plan or Railway's hobby tier), though providers like Neon, Supabase, and Render offer free tiers with specific limitations like inactivity pauses or storage caps (Hostmath, undated). For small production workloads with dedicated resources, expect to pay between $15 and $30 a month for basic nodes on platforms like DigitalOcean, Render, or Supabase's Pro plan ($25) (Hostmath, undated; Bytebase, undated)." }
+      ]
+    },
+    "postgres-current": {
+      "user": "user-darshan",
+      "id": "e0000000-0000-4000-8000-000000000005",
+      "turns": []
+    },
+    "postgres-pending": { "user": "user-darshan", "id": "e0000000-0000-4000-8000-000000000006", "turns": [] },
+    "postgres-delayed": { "user": "user-darshan", "id": "e0000000-0000-4000-8000-000000000007", "turns": [] },
+    "postgres-extraction-failed": { "user": "user-darshan", "id": "e0000000-0000-4000-8000-000000000008", "turns": [] },
+    "anvilly-history": { "user": "user-darshan", "id": "e0000000-0000-4000-8000-000000000009", "turns": [
+      { "id": "e9000000-0000-4000-8000-000000000001", "role": "user", "ts": "2026-11-01T10:00:00.000Z", "text": "who built anvilly?" },
+      { "id": "e9000000-0000-4000-8000-000000000002", "role": "assistant", "ts": "2026-11-01T10:00:12.000Z", "text": "Anvilly was built by Sagar Shirgaonkar as an AI app generator and cloud IDE." }
+    ] },
+    "anvilly-new-thread": { "user": "user-darshan", "id": "e0000000-0000-4000-8000-000000000010", "turns": [] },
+    "darshan-keyboard-thread": {
+      "user": "user-darshan",
+      "id": "e0000000-0000-4000-8000-000000000003",
+      "turns": [
+        { "id": "e3000000-0000-4000-8000-000000000001", "role": "user", "ts": "2026-10-03T15:00:00.000Z", "text": "I prefer loud tactile keyboard switches and full-size keyboards." },
+        { "id": "e3000000-0000-4000-8000-000000000002", "role": "assistant", "ts": "2026-10-03T15:00:12.000Z", "text": "Your preference is full-size keyboards with tactile switches." },
+        { "id": "e3000000-0000-4000-8000-000000000003", "role": "user", "ts": "2026-10-05T09:00:00.000Z", "text": "My desktop uses Wi-Fi; it is not wired through Ethernet." },
+        { "id": "e3000000-0000-4000-8000-000000000004", "role": "assistant", "ts": "2026-10-05T09:00:12.000Z", "text": "Your desktop is connected by Wi-Fi." },
+        { "id": "e3000000-0000-4000-8000-000000000005", "role": "user", "ts": "2026-10-11T11:00:00.000Z", "text": "My blue folder is for invoices, not trip notes." },
+        { "id": "e3000000-0000-4000-8000-000000000006", "role": "assistant", "ts": "2026-10-11T11:00:10.000Z", "text": "Your blue folder contains invoices." }
+      ]
+    }
+  },
+  "memoryCases": [
+    { "id": "personal-keyboard-preference", "category": "personal_preferences", "user": "user-darshan", "session": "darshan-hardware", "query": "What kind of keyboard do I prefer?", "expectedFacts": ["compact", "silent linear"], "relevantTurnIds": ["e1000000-0000-4000-8000-000000000002"] },
+    { "id": "same-owner-conflicting-thread-preference", "category": "hard_negatives", "user": "user-darshan", "session": "darshan-keyboard-thread", "query": "Do I prefer silent compact keyboards?", "expectedFacts": ["full-size", "tactile"], "relevantTurnIds": ["e3000000-0000-4000-8000-000000000002"] },
+    { "id": "corrected-price", "category": "corrections_conflicts", "user": "user-darshan", "session": "darshan-hardware", "query": "What did I actually pay for the DDR5 kit after correcting the estimate?", "expectedFacts": ["$108", "not $98"], "relevantTurnIds": ["e1000000-0000-4000-8000-000000000008"] },
+    { "id": "similar-ddr4-negative", "category": "hard_negatives", "user": "user-darshan", "session": "darshan-hardware", "query": "What did the DDR4 kit cost?", "expectedFacts": ["$52"], "relevantTurnIds": ["e1000000-0000-4000-8000-000000000010"] },
+    { "id": "project-runtime", "category": "project_technical", "user": "user-darshan", "session": "darshan-hardware", "query": "Which Node version does Kitty use, and what is canonical storage?", "expectedFacts": ["Node 24", "SQLite"], "relevantTurnIds": ["e1000000-0000-4000-8000-000000000014"] },
+    { "id": "implicit-project-followup", "category": "multi_turn_followups", "user": "user-darshan", "session": "darshan-followup", "query": "For that migration, how does indexing recover?", "expectedFacts": ["pending", "SQLite", "turn IDs"], "relevantTurnIds": ["e2000000-0000-4000-8000-000000000006"] },
+    { "id": "updated-vector-dimension", "category": "corrections_conflicts", "user": "user-darshan", "session": "darshan-followup", "query": "How many dimensions did we correct the MiniLM embedding size to?", "expectedFacts": ["384", "not 768"], "relevantTurnIds": ["e2000000-0000-4000-8000-000000000008"] },
+    { "id": "cross-session-long-term-detail", "category": "cross_session_recall", "user": "user-darshan", "session": "darshan-followup", "entities": ["green folder"], "query": "What did I say the green folder was for?", "expectedFacts": ["invoices"], "relevantTurnIds": ["e1000000-0000-4000-8000-000000000016"], "sourceSession": "darshan-hardware" },
+    { "id": "chronological-event", "category": "historical_events", "user": "user-darshan", "session": "darshan-followup", "query": "What happened in my October 22 memory discussion?", "dateRange": ["2026-10-22T00:00:00.000Z", "2026-10-22T23:59:59.999Z"], "expectedFacts": ["MiniLM", "legacy Qdrant", "fallback"], "relevantTurnIds": ["e2000000-0000-4000-8000-000000000003", "e2000000-0000-4000-8000-000000000004"] },
+    { "id": "raw-turn-session-scope", "category": "hard_negatives", "user": "user-darshan", "session": "darshan-hardware", "query": "What did I say my blue folder was for?", "expectedFacts": ["trip notes"], "relevantTurnIds": ["e1000000-0000-4000-8000-000000000016"], "forbiddenTurnIds": ["e3000000-0000-4000-8000-000000000006"] }
+  ],
+  "agentCases": [
+    { "id": "fresh-search", "category": "search_planning", "query": "What is the current published price in the fixture?", "intent": "search", "needsWeb": true, "searchQueries": ["fixture current price as of 2026-11-16"], "answerFacts": ["$120"], "source": { "title": "Price snapshot", "url": "https://fixture.example/pricing", "published_at": "2026-11-15" } },
+    { "id": "chat-no-search", "category": "search_planning", "query": "Thanks, that helped.", "intent": "chat", "needsWeb": false, "searchQueries": [], "answerFacts": ["anytime"], "source": null },
+    { "id": "context-correction-followup", "category": "multi_turn_continuity", "query": "What did I actually pay after the correction?", "intent": "chat", "needsWeb": false, "searchQueries": [], "answerFacts": ["$108", "not $98"], "source": null, "history": [{ "id": "history-1", "role": "user", "ts": "2026-10-07T11:00:00.000Z", "text": "The DDR5 kit estimate was $98." }, { "id": "history-2", "role": "assistant", "ts": "2026-10-07T11:00:10.000Z", "text": "The estimate was $98." }, { "id": "history-3", "role": "user", "ts": "2026-10-08T08:20:00.000Z", "text": "Correction: I paid $108, not $98." }, { "id": "history-4", "role": "assistant", "ts": "2026-10-08T08:20:10.000Z", "text": "The corrected paid price is $108, not $98." }] },
+    { "id": "as-of-temporal-delta", "category": "web_temporal_reasoning", "query": "Did the fixture price change since last week?", "intent": "temporal_delta", "needsWeb": true, "searchQueries": ["fixture price change 2026-11-16"], "historicalContext": "<memory>Historical price: $100/month as of 2026-11-08.</memory>", "answerFacts": ["changed", "$120", "2026-11-15"], "source": { "title": "Price snapshot", "url": "https://fixture.example/pricing", "published_at": "2026-11-15" } },
+    { "id": "contradictory-price-snapshots", "category": "web_evidence_conflicts", "query": "What is the current AcmeDB price?", "intent": "search", "needsWeb": true, "searchQueries": ["AcmeDB current price 2026-11-16"], "evidenceMode": "contradictory", "sources": [{ "title": "AcmeDB pricing page A", "url": "https://snapshot.example/acme-a", "content": "AcmeDB Standard costs $20/month as of 2026-11-15.", "published_date": "2026-11-15" }, { "title": "AcmeDB pricing page B", "url": "https://snapshot.example/acme-b", "content": "AcmeDB Standard costs $30/month as of 2026-11-15.", "published_date": "2026-11-15" }], "answerFacts": ["conflict", "$20", "$30", "unverified"], "expectedCitationUrls": ["https://snapshot.example/acme-a", "https://snapshot.example/acme-b"], "forbiddenAnswerFacts": ["confirmed at $20", "confirmed at $30"] },
+    { "id": "missing-price-sources", "category": "web_evidence_gaps", "query": "What is the current price for MissingDB?", "intent": "search", "needsWeb": true, "searchQueries": ["MissingDB current price 2026-11-16"], "evidenceMode": "missing", "sources": [], "answerFacts": ["couldn't verify", "no sources"], "expectedCitationUrls": [], "forbiddenAnswerFacts": ["$20", "$30", "changed"] },
+    { "id": "stale-price-source", "category": "web_evidence_staleness", "query": "What is the current price for OldDB?", "intent": "search", "needsWeb": true, "searchQueries": ["OldDB current price 2026-11-16"], "evidenceMode": "stale", "sources": [{ "title": "OldDB archived pricing", "url": "https://snapshot.example/olddb-archive", "content": "OldDB Standard cost $15/month.", "published_date": "2024-01-01" }], "answerFacts": ["stale", "unverified", "$15", "2024-01-01"], "expectedCitationUrls": ["https://snapshot.example/olddb-archive"] },
+    { "id": "unsupported-price-change", "category": "web_unsupported_changes", "query": "Did MissingHistoryDB rise to $120?", "intent": "temporal_delta", "needsWeb": true, "searchQueries": ["MissingHistoryDB current pricing 2026-11-16"], "evidenceMode": "unsupported_change", "sources": [{ "title": "MissingHistoryDB pricing", "url": "https://snapshot.example/missing-history", "content": "Current plan price is $120/month as of 2026-11-15.", "published_date": "2026-11-15" }], "answerFacts": ["$120", "can't confirm a change", "2026-11-15"], "expectedCitationUrls": ["https://snapshot.example/missing-history"], "forbiddenAnswerFacts": ["increased from", "changed from"] },
+    { "id": "anvilly-cross-thread-recall", "category": "cross_session_recall", "query": "did i ever asked you about anvilly?", "intent": "recall", "entities": ["Anvilly"], "needsMemory": true, "needsWeb": false, "searchQueries": [], "historicalContext": "<memory>Prior claim: entity Anvilly, attribute conversation topic, value User asked who built Anvilly.</memory>", "answerFacts": ["asked who built Anvilly"] }
+  ],
+  "extractorCases": [
+    { "id": "anvilly-conversation-topic", "sourceText": "who built anvilly?", "entities": ["Anvilly"], "claims": [{ "entity": "Anvilly", "attribute": "conversation topic", "value": "User asked who built Anvilly", "source_url": null, "as_of": "2026-11-01T10:00:12.000Z" }] }
+  ],
+  "claims": [
+    { "turnId": "e1000000-0000-4000-8000-000000000016", "entity": "green folder", "attribute": "purpose", "value": "invoices", "source_url": null, "as_of": "2026-10-18T09:00:12.000Z" },
+    { "turnId": "e1000000-0000-4000-8000-000000000002", "entity": "Keyboard", "attribute": "preferred switches/layout", "value": "compact layout; quiet silent-linear switches", "source_url": null, "as_of": "2026-10-02T09:00:10.000Z" },
+    { "turnId": "e3000000-0000-4000-8000-000000000002", "entity": "Keyboard", "attribute": "preferred switches/layout", "value": "full-size layout; loud tactile switches", "source_url": null, "as_of": "2026-10-03T15:00:12.000Z" }
+  ],
+  "claimSharingCases": [
+    { "id": "keyboard-claim-sharing-hardware-thread", "category": "cross_session_claim_sharing", "session": "darshan-hardware", "entities": ["Keyboard"], "ownClaim": "quiet silent-linear", "otherThreadClaim": "loud tactile" },
+    { "id": "keyboard-claim-sharing-preference-thread", "category": "cross_session_claim_sharing", "session": "darshan-keyboard-thread", "entities": ["Keyboard"], "ownClaim": "loud tactile", "otherThreadClaim": "quiet silent-linear" }
+  ],
+  "crossConversationCases": [
+    {
+      "id": "postgres-pricing-new-thread",
+      "category": "cross_conversation_temporal_delta",
+      "user": "user-darshan",
+      "sessionA": "postgres-historical",
+      "sessionB": "postgres-current",
+      "intent": "temporal_delta",
+      "needsMemory": true,
+      "needsWeb": true,
+      "previousMessage": "What is the pricing for Postgres hosting?",
+      "historicalTurnIds": ["e4000000-0000-4000-8000-000000000001", "e4000000-0000-4000-8000-000000000002"],
+      "query": "Last time I asked you about Postgres hosting. Has any pricing changed since then?",
+      "entities": ["Postgres hosting", "Heroku", "Railway", "Neon", "Supabase", "Render", "DigitalOcean"],
+      "expectedHistoricalFacts": ["$5 to $9 a month", "$15 and $30 a month", "Heroku", "Railway", "Neon", "Supabase", "Render", "DigitalOcean", "Hostmath", "Bytebase"],
+      "expectedClaimFacts": ["$5–$9/month", "$15–$30/month", "Heroku", "Railway", "Neon", "Supabase", "Render", "DigitalOcean", "Hostmath", "Bytebase"],
+      "extractedClaims": {
+        "entities": ["Postgres hosting", "Heroku", "Railway", "Neon", "Supabase", "Render", "DigitalOcean"],
+        "claims": [
+          { "entity": "Postgres hosting", "attribute": "entry-level paid range", "value": "$5–$9/month; Heroku Basic and Railway Hobby were examples; Hostmath, undated", "source_url": null, "as_of": "2026-10-30T10:00:20.000Z" },
+          { "entity": "Postgres hosting", "attribute": "small production range", "value": "$15–$30/month for basic dedicated nodes; Hostmath and Bytebase, undated", "source_url": null, "as_of": "2026-10-30T10:00:20.000Z" },
+          { "entity": "Neon", "attribute": "historical plan context", "value": "Free tier with limits; inactivity pauses or storage caps may apply", "source_url": null, "as_of": "2026-10-30T10:00:20.000Z" },
+          { "entity": "Supabase", "attribute": "historical plan context", "value": "Free tier with limits; Pro plan was cited at $25/month", "source_url": null, "as_of": "2026-10-30T10:00:20.000Z" },
+          { "entity": "Render", "attribute": "historical plan context", "value": "Free tier with limits; basic production nodes were in the $15–$30/month range", "source_url": null, "as_of": "2026-10-30T10:00:20.000Z" },
+          { "entity": "DigitalOcean", "attribute": "historical plan context", "value": "Basic production nodes were in the $15–$30/month range", "source_url": null, "as_of": "2026-10-30T10:00:20.000Z" }
+        ]
+      },
+      "currentSnapshots": [
+        { "title": "Heroku pricing snapshot", "url": "https://snapshot.example/heroku-pricing", "content": "As of 2026-11-15, Heroku Basic Postgres is $5/month.", "published_date": "2026-11-15" },
+        { "title": "Neon pricing snapshot", "url": "https://snapshot.example/neon-pricing", "content": "As of 2026-11-14, Neon Launch is $19/month. It is a different plan and is not directly comparable to the historical aggregate entry-level range.", "published_date": "2026-11-14" }
+      ],
+      "searchQuery": "Postgres hosting provider pricing Heroku Railway Neon Supabase Render DigitalOcean 2026-11-16",
+      "expectedAnswerFacts": ["$5 to $9/month", "$15 to $30/month", "Heroku", "Railway", "Neon", "Supabase", "Render", "DigitalOcean", "unchanged", "unverified", "no confirmed price changes", "2026-11-15", "2026-11-14"],
+      "requiredCurrentCitationUrls": ["https://snapshot.example/heroku-pricing", "https://snapshot.example/neon-pricing"],
+      "forbiddenAnswerPhrases": ["what did we discuss", "I don't have a record", "please repeat"]
+    }
+  ]
+}

@@ -7,7 +7,8 @@
     "dev": "concurrently -n server,web -c blue,green \"tsx watch server/index.ts\" \"vite --config web/vite.config.ts\"",
     "build": "vite build --config web/vite.config.ts",
     "start": "tsx server/index.ts",
-    "test": "node --import tsx --test server/time.test.ts server/agent/memory.test.ts server/db/queries.test.ts scripts/retrieval-metrics.test.ts",
+    "test": "node --experimental-test-module-mocks --import tsx --test server/time.test.ts server/agent/memory.test.ts server/db/queries.test.ts server/agent/regression.test.ts scripts/retrieval-metrics.test.ts",
+    "test:agent-regression": "node --experimental-test-module-mocks --import tsx server/agent/regression.test.ts",
     "bench:memory": "node --import tsx scripts/bench-memory.ts",
     "seed:memory:eval": "node --import tsx scripts/seed-memory-eval.ts",
     "typecheck": "tsc --noEmit"

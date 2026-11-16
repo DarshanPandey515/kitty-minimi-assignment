@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { db } from "./client.js";
 
-export type Turn = { id: string; session_id: string; ts: string; role: "user" | "assistant"; text: string; entities_json: string };
+export type Turn = { id: string; session_id: string; ts: string; role: "user" | "assistant"; text: string; entities_json: string; extraction_attempts?: number };
 export type Claim = { id: string; turn_id: string; entity: string; attribute: string; value: string; source_url: string | null; as_of: string };
 
 export function ensureSession(id: string) {
@@ -95,6 +95,22 @@ export function turnsByIds(sessionId: string, ids: string[]): Turn[] {
 }
 
 export type PendingTurn = Turn & { embedding_attempts: number };
+export type PendingExtraction = Turn & { extraction_attempts: number };
+export function pendingExtractions(limit = 4): PendingExtraction[] {
+  return db.prepare("SELECT * FROM turns WHERE role = 'assistant' AND extraction_status != 'complete' AND (extraction_retry_at IS NULL OR extraction_retry_at <= ?) ORDER BY ts LIMIT ?")
+    .all(new Date().toISOString(), limit) as PendingExtraction[];
+}
+
+export function retryTurnExtraction(id: string, attempts: number) {
+  const delay = Math.min(5 * 60_000, 2_000 * 2 ** Math.min(attempts, 7));
+  db.prepare("UPDATE turns SET extraction_status = 'pending', extraction_attempts = extraction_attempts + 1, extraction_retry_at = ? WHERE id = ?")
+    .run(new Date(Date.now() + delay).toISOString(), id);
+}
+
+export function markTurnExtractionComplete(id: string) {
+  db.prepare("UPDATE turns SET extraction_status = 'complete', extraction_retry_at = NULL WHERE id = ?").run(id);
+}
+
 export function pendingTurns(model: string, limit = 8): PendingTurn[] {
   return db.prepare("SELECT * FROM turns WHERE (embedding_status = 'pending' OR embedding_model IS NOT ?) AND (embedding_retry_at IS NULL OR embedding_retry_at <= ?) ORDER BY ts LIMIT ?")
     .all(model, new Date().toISOString(), limit) as PendingTurn[];
@@ -139,6 +155,7 @@ export function lastEntities(sessionId: string): string[] {
 export function writeExtraction(turnId: string, entities: string[], claims: Omit<Claim, "id" | "turn_id">[]) {
   const tx = db.transaction(() => {
     db.prepare("UPDATE turns SET entities_json = ? WHERE id = ?").run(JSON.stringify(entities), turnId);
+    markTurnExtractionComplete(turnId);
     db.prepare("DELETE FROM claims WHERE turn_id = ?").run(turnId);
     const ins = db.prepare("INSERT INTO claims (id, turn_id, entity, attribute, value, source_url, as_of) VALUES (?, ?, ?, ?, ?, ?, ?)");
     for (const c of claims) ins.run(randomUUID(), turnId, c.entity, c.attribute, c.value, c.source_url, c.as_of);
