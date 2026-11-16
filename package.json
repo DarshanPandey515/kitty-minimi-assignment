@@ -7,7 +7,7 @@
     "dev": "concurrently -n server,web -c blue,green \"tsx watch server/index.ts\" \"vite --config web/vite.config.ts\"",
     "build": "vite build --config web/vite.config.ts",
     "start": "tsx server/index.ts",
-    "test": "node --import tsx --test server/time.test.ts server/agent/memory.test.ts server/db/queries.test.ts",
+    "test": "node --import tsx --test server/time.test.ts server/agent/memory.test.ts server/db/queries.test.ts scripts/retrieval-metrics.test.ts",
     "bench:memory": "node --import tsx scripts/bench-memory.ts",
     "typecheck": "tsc --noEmit"
   },

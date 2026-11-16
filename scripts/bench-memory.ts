@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { readFileSync } from "node:fs";
 import { performance } from "node:perf_hooks";
+import { scoreRetrieval, type RetrievalMetrics } from "./retrieval-metrics.js";
 
 type Case = {
   sessionId: string;
@@ -47,12 +48,12 @@ for (const [index, item] of cases.entries()) {
   }
 }
 
-type Metrics = { recall: number[]; latency: number[] };
+type Metrics = { hitAt8: number[]; recallAt8: number[]; mrr: number[]; latency: number[] };
 const metrics: Record<string, { sql: Metrics; hybrid: Metrics }> = {};
 
 for (const item of cases) {
   const type = item.intent === "recall" && item.dateRange ? "temporal" : "semantic";
-  const group = metrics[type] ??= { sql: { recall: [], latency: [] }, hybrid: { recall: [], latency: [] } };
+  const group = metrics[type] ??= { sql: newMetrics(), hybrid: newMetrics() };
   const start = performance.now();
   const sqlLexical = item.intent === "recall" && item.dateRange
     ? []
@@ -60,24 +61,28 @@ for (const item of cases) {
   const sqlTemporal = item.dateRange ? turnsInRange(item.sessionId, ...item.dateRange, 24) : [];
   const sql = [...new Map([...sqlLexical, ...sqlTemporal].map((turn) => [turn.id, turn])).values()].slice(0, 8);
   group.sql.latency.push(performance.now() - start);
-  group.sql.recall.push(hitRate(sql.map((turn) => turn.id), item.relevantTurnIds));
+  recordMetrics(group.sql, scoreRetrieval(sql.map((turn) => turn.id), item.relevantTurnIds));
 
   const hybridStart = performance.now();
   const hybrid = await retrieveMemory({ ...item, limit: 8 });
   group.hybrid.latency.push(performance.now() - hybridStart);
-  group.hybrid.recall.push(hitRate(hybrid.map((turn) => turn.id), item.relevantTurnIds));
+  recordMetrics(group.hybrid, scoreRetrieval(hybrid.map((turn) => turn.id), item.relevantTurnIds));
 }
 
 console.log(JSON.stringify({ cases: cases.length, byType: Object.fromEntries(Object.entries(metrics).map(([type, group]) => [type, {
-  cases: group.sql.recall.length,
+  cases: group.sql.hitAt8.length,
   sql: summarize(group.sql),
   hybrid: summarize(group.hybrid),
 }])) }, null, 2));
 
-function hitRate(returned: string[], relevant: string[]) {
-  if (!relevant.length) return 0;
-  const hits = new Set(returned.filter((id) => relevant.includes(id))).size;
-  return hits / relevant.length;
+function newMetrics(): Metrics {
+  return { hitAt8: [], recallAt8: [], mrr: [], latency: [] };
+}
+
+function recordMetrics(target: Metrics, scored: RetrievalMetrics) {
+  target.hitAt8.push(scored.hitAt8);
+  target.recallAt8.push(scored.recallAt8);
+  target.mrr.push(scored.mrr);
 }
 
 function percentile(values: number[], p: number) {
@@ -85,9 +90,15 @@ function percentile(values: number[], p: number) {
   return Number((sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * p) - 1)] ?? 0).toFixed(1));
 }
 
-function summarize(values: { recall: number[]; latency: number[] }) {
+function summarize(values: Metrics) {
   return {
-    recallAt8: Number((values.recall.reduce((sum, value) => sum + value, 0) / Math.max(values.recall.length, 1)).toFixed(3)),
+    hitAt8: average(values.hitAt8),
+    recallAt8: average(values.recallAt8),
+    mrr: average(values.mrr),
     latencyMs: { p50: percentile(values.latency, 0.5), p95: percentile(values.latency, 0.95) },
   };
+}
+
+function average(values: number[]) {
+  return Number((values.reduce((sum, value) => sum + value, 0) / Math.max(values.length, 1)).toFixed(3));
 }
