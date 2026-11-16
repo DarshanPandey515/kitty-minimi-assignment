@@ -29,29 +29,48 @@ try {
   process.exit(1);
 }
 
-const [{ searchTurns, turnsInRange }, { retrieveMemory }] = await Promise.all([
+const [{ searchTurns, turnsInRange, turnsByIds }, { retrieveMemory }] = await Promise.all([
   import("../server/db/queries.js"),
   import("../server/agent/memory.js"),
 ]);
-const metrics = { sql: { recall: [] as number[], latency: [] as number[] }, hybrid: { recall: [] as number[], latency: [] as number[] } };
+for (const [index, item] of cases.entries()) {
+  if (!item.sessionId || !item.query || !Array.isArray(item.relevantTurnIds) || !item.relevantTurnIds.length) {
+    console.error(`Invalid benchmark case ${index + 1}: sessionId, query, and at least one relevantTurnId are required.`);
+    process.exit(1);
+  }
+  const found = turnsByIds(item.sessionId, item.relevantTurnIds);
+  if (found.length !== item.relevantTurnIds.length) {
+    console.error(`Invalid benchmark case ${index + 1}: one or more relevantTurnIds are missing from session ${item.sessionId}. Replace the example placeholders with real IDs from the database.`);
+    process.exit(1);
+  }
+}
+
+type Metrics = { recall: number[]; latency: number[] };
+const metrics: Record<string, { sql: Metrics; hybrid: Metrics }> = {};
 
 for (const item of cases) {
+  const type = item.intent === "recall" && item.dateRange ? "temporal" : "semantic";
+  const group = metrics[type] ??= { sql: { recall: [], latency: [] }, hybrid: { recall: [], latency: [] } };
   const start = performance.now();
   const sqlLexical = item.intent === "recall" && item.dateRange
     ? []
     : searchTurns(item.sessionId, item.query, 24).filter((turn) => !item.dateRange || (turn.ts >= item.dateRange[0] && turn.ts <= item.dateRange[1]));
   const sqlTemporal = item.dateRange ? turnsInRange(item.sessionId, ...item.dateRange, 24) : [];
   const sql = [...new Map([...sqlLexical, ...sqlTemporal].map((turn) => [turn.id, turn])).values()].slice(0, 8);
-  metrics.sql.latency.push(performance.now() - start);
-  metrics.sql.recall.push(hitRate(sql.map((turn) => turn.id), item.relevantTurnIds));
+  group.sql.latency.push(performance.now() - start);
+  group.sql.recall.push(hitRate(sql.map((turn) => turn.id), item.relevantTurnIds));
 
   const hybridStart = performance.now();
   const hybrid = await retrieveMemory({ ...item, limit: 8 });
-  metrics.hybrid.latency.push(performance.now() - hybridStart);
-  metrics.hybrid.recall.push(hitRate(hybrid.map((turn) => turn.id), item.relevantTurnIds));
+  group.hybrid.latency.push(performance.now() - hybridStart);
+  group.hybrid.recall.push(hitRate(hybrid.map((turn) => turn.id), item.relevantTurnIds));
 }
 
-console.log(JSON.stringify({ cases: cases.length, sql: summarize(metrics.sql), hybrid: summarize(metrics.hybrid) }, null, 2));
+console.log(JSON.stringify({ cases: cases.length, byType: Object.fromEntries(Object.entries(metrics).map(([type, group]) => [type, {
+  cases: group.sql.recall.length,
+  sql: summarize(group.sql),
+  hybrid: summarize(group.hybrid),
+}])) }, null, 2));
 
 function hitRate(returned: string[], relevant: string[]) {
   if (!relevant.length) return 0;
