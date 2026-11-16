@@ -15,96 +15,7 @@ import { AgentActivity } from "@/components/agents/agent-activity";
 import { MessageScroller } from "@/components/agents/message-scroller";
 import { PromptInput } from "@/components/agents/prompt-input";
 import { AISidebar, type SidebarResource } from "@/components/agents/ai-sidebar";
-
-const PIXELS_32 = [
-  "................................",
-  "......##................##......",
-  ".....####..............####.....",
-  "....#PPPP#............#PPPP#....",
-  "...#PPPPPP#..........#PPPPPP#...",
-  "..#PPPPPPPP#........#PPPPPPPP#..",
-  "..#PPPPPPPP#..####..#PPPPPPPP#..",
-  "..#PPPPPPPP###FFFF###PPPPPPPP#..",
-  "..#SHHHHHHHHHHHHHHHHHHHHHHHHS#..",
-  ".#SHHHHHHHHHHHHHHHHHHHHHHHHHHS#.",
-  ".#SFFFFFFFFFFFFFFFFFFFFFFFFFFS#.",
-  ".#SFFFEEEEFFFFFFFFFFFFEEEEFFFS#.",
-  ".#SFFFWEEEFFFFFFFFFFFFWEEEFFFS#.",
-  ".#SFFFWEEEFFFFFFFFFFFFWEEEFFFS#.",
-  ".#SFFFEEEEFFFFFFFFFFFFEEEEFFFS#.",
-  ".#SFFFFEEFFFFFFFFFFFFFFEEFFFFS#.",
-  ".#SFFFFFFFFFFFFFFFFFFFFFFFFFFS#.",
-  ".#SFFBBBFFFFFFFNNFFFFFFFBBBFFS#.",
-  ".#SFFBBBFFFFFFFNNFFFFFFFBBBFFS#.",
-  ".#SFFFFFFFFFFFMFFMFFFFFFFFFFFS#.",
-  ".#SFFFFFFFFFFFFMMFFFFFFFFFFFFS#.",
-  ".#SFFFFFFFFFFFFFFFFFFFFFFFFFFS#.",
-  ".#SSFFFFFFFFFFFFFFFFFFFFFFFFSS#.",
-  "..#SSFFFFFFFFFFFFFFFFFFFFFFSS#..",
-  "..#SSFFFFFFFFFFFFFFFFFFFFFFSS#..",
-  "...#SSFFFFFFFFFFFFFFFFFFFFSS#...",
-  "....#SSFFFFFFFFFFFFFFFFSS#....",
-  ".....#SSFFFFFFFFFFFFFFFFSS#.....",
-  "......#SSSSSSSSSSSSSSSSSS#......",
-  ".......#SSSSSSSSSSSSSSSS#.......",
-  "........################........",
-  "................................",
-];
-
-const PIXEL_COLORS_32: Record<string, string> = {
-  "#": "#241634", // outline
-  S: "#c2740a",   // fur shadow
-  F: "#fbbf24",   // fur base
-  H: "#fde68a",   // fur highlight (rim light)
-  P: "#fb7185",   // ear interior
-  E: "#1a0f2e",   // eye
-  W: "#ffffff",   // eye shine
-  N: "#e11d48",   // nose
-  M: "#7c2d12",   // mouth
-  B: "#fda4af",   // blush
-};
-
-function PixelCat({
-  pixels = PIXELS_32,
-  colors = PIXEL_COLORS_32,
-  className = "",
-}: {
-  pixels?: string[];
-  colors?: Record<string, string>;
-  className?: string;
-}) {
-  const w = pixels[0].length;
-  const h = pixels.length;
-
-  const paths = useMemo(() => {
-    const byColor: Record<string, string[]> = {};
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const ch = pixels[y][x];
-        if (!colors[ch]) continue;
-        (byColor[ch] ??= []).push(`M${x} ${y}h1v1h-1z`);
-      }
-    }
-    return Object.entries(byColor).map(([ch, d]) => ({
-      fill: colors[ch],
-      d: d.join(""),
-    }));
-  }, [pixels, colors, w, h]);
-
-  return (
-    <svg
-      viewBox={`0 0 ${w} ${h}`}
-      className={className}
-      shapeRendering="crispEdges"
-      aria-hidden
-    >
-      {paths.map((p) => (
-        <path key={p.fill} d={p.d} fill={p.fill} />
-      ))}
-    </svg>
-  );
-}
-
+import PixelCat from "./components/kitty-avatar/avatar";
 
 type Source = { query: string; title: string; url: string; published_at: string | null };
 type SearchActivity = {
@@ -309,8 +220,8 @@ export function App() {
               <div className="flex items-center gap-2">
                 <h1 className="font-semibold tracking-tighter">Kitty</h1>
               </div>
-              <p className="mt-1 text-xs leading-snug text-muted-foreground">
-                A curious, context-aware assistant. She searches before she speaks.
+              <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                A curious assistant.
               </p>
             </div>
           </div>
