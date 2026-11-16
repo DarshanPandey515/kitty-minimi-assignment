@@ -74,16 +74,19 @@ TypeScript and Node.js on the server, React and Vite in the browser, Gemini for 
 
 ## Run locally
 
-Use Node.js 24 for the commands below, including the tests.
+Use Node.js 24 and install Docker with the Compose plugin to run Qdrant locally.
 
 ```bash
 cp .env.example .env
 # Set GEMINI_API_KEY and TAVILY_API_KEY in .env
 npm install
+docker compose up -d qdrant
 npm run dev
 ```
 
-Open [localhost:5173](http://localhost:5173). To enable semantic recall, start Qdrant with `docker compose up -d qdrant` and restart the dev server. If you skip Qdrant, clear `QDRANT_URL` in `.env` to use SQLite recall alone. The first MiniLM load downloads about 25 MB; subsequent runs use the cache.
+Open [localhost:5173](http://localhost:5173). The Docker Compose step starts Qdrant at `http://localhost:6333`, which matches `QDRANT_URL` in `.env.example`. Leave `QDRANT_API_KEY` blank for the local container. The first MiniLM load downloads about 25 MB; subsequent runs use the cache.
+
+For SQLite recall only, clear `QDRANT_URL` in `.env` and skip the Docker Compose step.
 
 ## Environment variables
 
