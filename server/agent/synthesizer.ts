@@ -40,7 +40,9 @@ export async function decideRecall(args: {
       thinkingConfig,
     },
   });
-  return RecallDecisionSchema.parse(parseJson(response.text ?? ""));
+  const text = response.text?.trim();
+  if (!text) throw new Error("Recall decision returned an empty response");
+  return RecallDecisionSchema.parse(parseJson(text));
 }
 
 export async function synthesize(args: {
