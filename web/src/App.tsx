@@ -29,7 +29,10 @@ type SearchActivity = {
 type Msg = { role: "user" | "assistant"; text: string; sources?: Source[]; activity?: SearchActivity[] };
 type Conversation = { id: string; title: string; updated_at: string; turn_count: number };
 
-const SID_KEY = "agent.sessionId";
+function conversationIdFromPath() {
+  const parts = window.location.pathname.split("/").filter(Boolean);
+  return parts.length === 1 ? decodeURIComponent(parts[0]) : "";
+}
 
 export function App() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -48,25 +51,34 @@ export function App() {
     return next;
   }
 
-  async function createConversation() {
-    const response = await fetch("/api/conversations", { method: "POST" });
-    if (!response.ok) throw new Error("Could not create conversation");
-    const created = await response.json() as { id: string };
-    setSessionId(created.id);
-    localStorage.setItem(SID_KEY, created.id);
+  function resetDraft() {
+    setSessionId("");
     setMsgs([]);
-    await refreshThreads();
+    setInput("");
+    setStatus("");
+  }
+
+  function startNewConversation() {
+    if (busy) return;
+    if (window.location.pathname !== "/") window.history.pushState({}, "", "/");
+    resetDraft();
+  }
+
+  async function readConversation(id: string) {
+    const response = await fetch(`/api/conversations/${encodeURIComponent(id)}`);
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error("Could not load conversation");
+    return await response.json() as { role: "user" | "assistant"; text: string }[];
   }
 
   async function openConversation(id: string) {
     if (busy || id === sessionId) return;
-    const response = await fetch(`/api/conversations/${encodeURIComponent(id)}`);
-    if (!response.ok) throw new Error("Could not load conversation");
-    const turns = await response.json() as { role: "user" | "assistant"; text: string }[];
+    const turns = await readConversation(id);
+    if (!turns) throw new Error("Conversation not found");
     setSessionId(id);
-    localStorage.setItem(SID_KEY, id);
     setMsgs(turns.map(({ role, text }) => ({ role, text })));
     setInput("");
+    window.history.pushState({}, "", `/${encodeURIComponent(id)}`);
   }
 
   async function removeConversation(id: string) {
@@ -75,8 +87,21 @@ export function App() {
     if (!response.ok) throw new Error("Could not delete conversation");
     const remaining = await refreshThreads();
     if (id === sessionId) {
-      if (remaining.length) await openConversation(remaining[0].id);
-      else await createConversation();
+      if (remaining.length) {
+        const next = remaining[0];
+        const turns = await readConversation(next.id);
+        if (turns) {
+          setSessionId(next.id);
+          setMsgs(turns.map(({ role, text }) => ({ role, text })));
+          window.history.replaceState({}, "", `/${encodeURIComponent(next.id)}`);
+        } else {
+          window.history.replaceState({}, "", "/");
+          resetDraft();
+        }
+      } else {
+        window.history.replaceState({}, "", "/");
+        resetDraft();
+      }
     }
   }
 
@@ -84,23 +109,20 @@ export function App() {
     let cancelled = false;
     async function initialize() {
       try {
-        let all = await refreshThreads();
-        const savedId = localStorage.getItem(SID_KEY);
-        let active = all.find((item) => item.id === savedId);
-        if (!active && all.length) active = all[0];
-        if (!active) {
-          const response = await fetch("/api/conversations", { method: "POST" });
-          if (!response.ok) throw new Error("Could not create conversation");
-          const created = await response.json() as { id: string };
-          all = await refreshThreads();
-          active = all.find((item) => item.id === created.id) ?? { id: created.id, title: "New conversation", updated_at: "", turn_count: 0 };
+        await refreshThreads();
+        const id = conversationIdFromPath();
+        if (!id) {
+          if (!cancelled) resetDraft();
+          return;
         }
-        const response = await fetch(`/api/conversations/${encodeURIComponent(active.id)}`);
-        if (!response.ok) throw new Error("Could not load conversation");
-        const turns = await response.json() as { role: "user" | "assistant"; text: string }[];
+        const turns = await readConversation(id);
+        if (!turns) {
+          window.history.replaceState({}, "", "/");
+          if (!cancelled) resetDraft();
+          return;
+        }
         if (!cancelled) {
-          setSessionId(active.id);
-          localStorage.setItem(SID_KEY, active.id);
+          setSessionId(id);
           setMsgs(turns.map(({ role, text }) => ({ role, text })));
         }
       } catch (error) {
@@ -110,7 +132,21 @@ export function App() {
       }
     }
     void initialize();
-    return () => { cancelled = true; };
+    const onPopState = () => {
+      const id = conversationIdFromPath();
+      if (!id) { resetDraft(); return; }
+      void readConversation(id).then((turns) => {
+        if (turns) {
+          setSessionId(id);
+          setMsgs(turns.map(({ role, text }) => ({ role, text })));
+        } else {
+          window.history.replaceState({}, "", "/");
+          resetDraft();
+        }
+      }).catch((error) => setStatus(error.message));
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => { cancelled = true; window.removeEventListener("popstate", onPopState); };
   }, []);
 
   const sidebarItems: SidebarResource[] = threads.map((thread) => ({ id: thread.id, label: thread.title, kind: "file" }));
@@ -118,7 +154,8 @@ export function App() {
     setMsgs((ms) => ms.map((m, i) => (i === ms.length - 1 ? fn(m) : m)));
 
   async function send(message: string) {
-    if (!message.trim() || busy || !sessionId) return;
+    if (!message.trim() || busy) return;
+    const requestSessionId = sessionId || crypto.randomUUID();
     setInput("");
     setBusy(true);
     setStatus("Thinking…");
@@ -128,11 +165,14 @@ export function App() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, message }),
+        body: JSON.stringify({ sessionId: requestSessionId, message }),
       });
       if (!res.ok) throw new Error(`Request failed (${res.status})`);
       const sid = res.headers.get("x-session-id");
-      if (sid) { setSessionId(sid); localStorage.setItem(SID_KEY, sid); }
+      if (sid) {
+        setSessionId(sid);
+        if (!sessionId) window.history.pushState({}, "", `/${encodeURIComponent(sid)}`);
+      }
       if (!res.body) throw new Error("No response stream");
       const reader = res.body.getReader();
       const dec = new TextDecoder();
@@ -230,7 +270,7 @@ export function App() {
         </div>
 
         <div className="flex h-[32dvh] min-h-40 flex-col overflow-hidden rounded-2xl border border-border/70 bg-card p-3 lg:h-auto lg:min-h-0 lg:flex-1">
-          <button type="button" disabled={busy || threadsLoading} onClick={() => void createConversation().catch((error) => setStatus(error.message))}
+          <button type="button" disabled={busy || threadsLoading} onClick={startNewConversation}
             className="mb-3 inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-3 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50">
             <Plus className="size-4" /> New conversation
           </button>

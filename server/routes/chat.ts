@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import { runAgent, type AgentEvent } from "../agent/index.js";
-import { deleteSession, ensureSession, lastTurns, listSessions } from "../db/queries.js";
+import { deleteSession, ensureSession, lastTurns, listSessions, sessionExists } from "../db/queries.js";
 import { deleteSessionIndex } from "../agent/memory.js";
 
 export const chatRouter = Router();
@@ -17,6 +17,7 @@ chatRouter.post("/conversations", (_req, res) => {
 });
 
 chatRouter.get("/conversations/:id", (req, res) => {
+  if (!sessionExists(req.params.id)) { res.sendStatus(404); return; }
   res.json(lastTurns(req.params.id, 1000));
 });
 
@@ -31,6 +32,7 @@ chatRouter.post("/chat", async (req, res) => {
   const message = String(req.body?.message ?? "").trim();
   if (!message) { res.status(400).json({ error: "message required" }); return; }
   const sessionId = String(req.body?.sessionId || "") || randomUUID();
+  ensureSession(sessionId);
 
   res.set({
     "Content-Type": "text/event-stream",

@@ -8,6 +8,10 @@ export function ensureSession(id: string) {
   db.prepare("INSERT OR IGNORE INTO sessions (id, created_at) VALUES (?, ?)").run(id, new Date().toISOString());
 }
 
+export function sessionExists(id: string) {
+  return Boolean(db.prepare("SELECT 1 FROM sessions WHERE id = ?").get(id));
+}
+
 export function listSessions(limit = 100) {
   return db.prepare(`
     SELECT s.id,

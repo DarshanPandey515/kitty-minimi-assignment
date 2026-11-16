@@ -11,6 +11,8 @@ const queries = await import("./queries.js");
 test("date-range turn retrieval remains scoped to its session", () => {
   queries.ensureSession("session-a");
   queries.ensureSession("session-b");
+  assert.equal(queries.sessionExists("session-a"), true);
+  assert.equal(queries.sessionExists("missing-session"), false);
   queries.insertTurn("session-a", "user", "same date");
   queries.insertTurn("session-b", "user", "other session");
   const start = "2000-01-01T00:00:00.000Z";
