@@ -52,7 +52,7 @@ These exchanges summarize the [regression fixtures](tests/fixtures/agent-regress
 
 1. The server resolves dates in UTC and uses Gemini to classify the request as chat, search, recall, or a comparison with the past.
 2. The agent supplies recent context and matching claims from SQLite. A date lookup can use SQLite alone; semantic recall combines SQLite text matches with Qdrant results for the active thread. Extracted claims are available across threads.
-3. Gemini streams the answer. Its only tool is web search, via Tavily. SQLite saves the conversation, and background workers handle claim extraction and vector indexing.
+3. Gemini streams the answer. Its only tool is web search, via Tavily. Searches requested together run in parallel, up to six searches per response. SQLite saves the conversation, and background workers handle claim extraction and vector indexing.
 
 ## Architecture
 
