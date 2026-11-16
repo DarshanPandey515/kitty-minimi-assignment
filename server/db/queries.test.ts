@@ -18,4 +18,15 @@ test("date-range turn retrieval remains scoped to its session", () => {
   assert.deepEqual(queries.turnsInRange("session-a", start, end).map((turn) => turn.session_id), ["session-a"]);
 });
 
+test("conversation listing summarizes sessions and deletion removes their turns", () => {
+  queries.ensureSession("session-delete");
+  queries.insertTurn("session-delete", "user", "A conversation title");
+  const listed = queries.listSessions().find((session) => session.id === "session-delete");
+  assert.equal(listed?.title, "A conversation title");
+  assert.equal(listed?.turn_count, 1);
+  assert.equal(queries.deleteSession("session-delete"), true);
+  assert.equal(queries.deleteSession("session-delete"), false);
+  assert.deepEqual(queries.lastTurns("session-delete", 10), []);
+});
+
 test.after(() => rmSync(dir, { recursive: true, force: true }));

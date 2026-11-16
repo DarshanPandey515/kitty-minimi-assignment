@@ -1,8 +1,31 @@
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import { runAgent, type AgentEvent } from "../agent/index.js";
+import { deleteSession, ensureSession, lastTurns, listSessions } from "../db/queries.js";
+import { deleteSessionIndex } from "../agent/memory.js";
 
 export const chatRouter = Router();
+
+chatRouter.get("/conversations", (_req, res) => {
+  res.json(listSessions());
+});
+
+chatRouter.post("/conversations", (_req, res) => {
+  const id = randomUUID();
+  ensureSession(id);
+  res.status(201).json({ id });
+});
+
+chatRouter.get("/conversations/:id", (req, res) => {
+  res.json(lastTurns(req.params.id, 1000));
+});
+
+chatRouter.delete("/conversations/:id", (req, res) => {
+  const removed = deleteSession(req.params.id);
+  if (!removed) { res.sendStatus(404); return; }
+  void deleteSessionIndex(req.params.id).catch((err) => console.warn("[memory] deleted conversation vectors cleanup failed:", (err as Error).message));
+  res.sendStatus(204);
+});
 
 chatRouter.post("/chat", async (req, res) => {
   const message = String(req.body?.message ?? "").trim();

@@ -8,6 +8,26 @@ export function ensureSession(id: string) {
   db.prepare("INSERT OR IGNORE INTO sessions (id, created_at) VALUES (?, ?)").run(id, new Date().toISOString());
 }
 
+export function listSessions(limit = 100) {
+  return db.prepare(`
+    SELECT s.id,
+      COALESCE((SELECT text FROM turns WHERE session_id = s.id AND role = 'user' ORDER BY ts, rowid LIMIT 1), 'New conversation') AS title,
+      COALESCE(MAX(t.ts), s.created_at) AS updated_at,
+      COUNT(t.id) AS turn_count
+    FROM sessions s LEFT JOIN turns t ON t.session_id = s.id
+    GROUP BY s.id ORDER BY updated_at DESC LIMIT ?
+  `).all(limit) as { id: string; title: string; updated_at: string; turn_count: number }[];
+}
+
+export function deleteSession(id: string) {
+  const remove = db.transaction(() => {
+    db.prepare("DELETE FROM claims WHERE turn_id IN (SELECT id FROM turns WHERE session_id = ?)").run(id);
+    db.prepare("DELETE FROM turns WHERE session_id = ?").run(id);
+    return db.prepare("DELETE FROM sessions WHERE id = ?").run(id).changes > 0;
+  });
+  return remove();
+}
+
 export function insertTurn(sessionId: string, role: Turn["role"], text: string): Turn {
   const t: Turn = { id: randomUUID(), session_id: sessionId, ts: new Date().toISOString(), role, text, entities_json: "[]" };
   db.prepare("INSERT INTO turns (id, session_id, ts, role, text, entities_json) VALUES (@id, @session_id, @ts, @role, @text, @entities_json)").run(t);

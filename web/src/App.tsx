@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Cat } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Cat, MessageSquare, Plus, Trash2 } from "lucide-react";
 import { ChatApp } from "@/components/agents/chat-app";
 import {
   Message,
@@ -14,6 +14,7 @@ import { StreamingResponse } from "@/components/agents/streaming-response";
 import { AgentActivity } from "@/components/agents/agent-activity";
 import { MessageScroller } from "@/components/agents/message-scroller";
 import { PromptInput } from "@/components/agents/prompt-input";
+import { AISidebar, type SidebarResource } from "@/components/agents/ai-sidebar";
 
 /* -------------------------------------------------------------------------- */
 /*  Pixel kitty                                                               */
@@ -67,50 +68,6 @@ function PixelCat({ className = "" }: { className?: string }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Catalog                                                                   */
-/* -------------------------------------------------------------------------- */
-
-type CatalogItem = { emoji: string; title: string; desc: string; tint: string; prompt: string };
-
-const CATALOG: CatalogItem[] = [
-  {
-    emoji: "🔎",
-    title: "Search the web",
-    desc: "Fresh answers with sources",
-    tint: "bg-sky-500/15",
-    prompt: "Search the web for the latest AI news and summarize the top 3 stories with sources.",
-  },
-  {
-    emoji: "🧶",
-    title: "Explain simply",
-    desc: "Complex idea, plain words",
-    tint: "bg-fuchsia-500/15",
-    prompt: "Explain how transformers work, like I'm five.",
-  },
-  {
-    emoji: "📝",
-    title: "Summarize",
-    desc: "Long text → key points",
-    tint: "bg-amber-500/15",
-    prompt: "Summarize the following text into five bullet points: ",
-  },
-  {
-    emoji: "💡",
-    title: "Brainstorm",
-    desc: "Ten ideas, fast",
-    tint: "bg-emerald-500/15",
-    prompt: "Brainstorm 10 names for a cozy cat-themed note-taking app.",
-  },
-  {
-    emoji: "🧪",
-    title: "Debug code",
-    desc: "Find the bug, explain it",
-    tint: "bg-violet-500/15",
-    prompt: "Review this code and tell me what's wrong: ",
-  },
-];
-
-/* -------------------------------------------------------------------------- */
 /*  App                                                                       */
 /* -------------------------------------------------------------------------- */
 
@@ -122,19 +79,98 @@ type SearchActivity = {
   results?: { id: string; title: string; domain: string; url: string }[];
 };
 type Msg = { role: "user" | "assistant"; text: string; sources?: Source[]; activity?: SearchActivity[] };
+type Conversation = { id: string; title: string; updated_at: string; turn_count: number };
 
 const SID_KEY = "agent.sessionId";
 
 export function App() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
+  const [threads, setThreads] = useState<Conversation[]>([]);
+  const [sessionId, setSessionId] = useState("");
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const [threadsLoading, setThreadsLoading] = useState(true);
+
+  async function refreshThreads() {
+    const response = await fetch("/api/conversations");
+    if (!response.ok) throw new Error("Could not load conversations");
+    const next = await response.json() as Conversation[];
+    setThreads(next);
+    return next;
+  }
+
+  async function createConversation() {
+    const response = await fetch("/api/conversations", { method: "POST" });
+    if (!response.ok) throw new Error("Could not create conversation");
+    const created = await response.json() as { id: string };
+    setSessionId(created.id);
+    localStorage.setItem(SID_KEY, created.id);
+    setMsgs([]);
+    await refreshThreads();
+  }
+
+  async function openConversation(id: string) {
+    if (busy || id === sessionId) return;
+    const response = await fetch(`/api/conversations/${encodeURIComponent(id)}`);
+    if (!response.ok) throw new Error("Could not load conversation");
+    const turns = await response.json() as { role: "user" | "assistant"; text: string }[];
+    setSessionId(id);
+    localStorage.setItem(SID_KEY, id);
+    setMsgs(turns.map(({ role, text }) => ({ role, text })));
+    setInput("");
+  }
+
+  async function removeConversation(id: string) {
+    if (!window.confirm("Delete this conversation? This cannot be undone.")) return;
+    const response = await fetch(`/api/conversations/${encodeURIComponent(id)}`, { method: "DELETE" });
+    if (!response.ok) throw new Error("Could not delete conversation");
+    const remaining = await refreshThreads();
+    if (id === sessionId) {
+      if (remaining.length) await openConversation(remaining[0].id);
+      else await createConversation();
+    }
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    async function initialize() {
+      try {
+        let all = await refreshThreads();
+        const savedId = localStorage.getItem(SID_KEY);
+        let active = all.find((item) => item.id === savedId);
+        if (!active && all.length) active = all[0];
+        if (!active) {
+          const response = await fetch("/api/conversations", { method: "POST" });
+          if (!response.ok) throw new Error("Could not create conversation");
+          const created = await response.json() as { id: string };
+          all = await refreshThreads();
+          active = all.find((item) => item.id === created.id) ?? { id: created.id, title: "New conversation", updated_at: "", turn_count: 0 };
+        }
+        const response = await fetch(`/api/conversations/${encodeURIComponent(active.id)}`);
+        if (!response.ok) throw new Error("Could not load conversation");
+        const turns = await response.json() as { role: "user" | "assistant"; text: string }[];
+        if (!cancelled) {
+          setSessionId(active.id);
+          localStorage.setItem(SID_KEY, active.id);
+          setMsgs(turns.map(({ role, text }) => ({ role, text })));
+        }
+      } catch (error) {
+        if (!cancelled) setStatus((error as Error).message);
+      } finally {
+        if (!cancelled) setThreadsLoading(false);
+      }
+    }
+    void initialize();
+    return () => { cancelled = true; };
+  }, []);
+
+  const sidebarItems: SidebarResource[] = threads.map((thread) => ({ id: thread.id, label: thread.title, kind: "file" }));
   const patchLast = (fn: (m: Msg) => Msg) =>
     setMsgs((ms) => ms.map((m, i) => (i === ms.length - 1 ? fn(m) : m)));
 
   async function send(message: string) {
-    if (!message.trim() || busy) return;
+    if (!message.trim() || busy || !sessionId) return;
     setInput("");
     setBusy(true);
     setStatus("Thinking…");
@@ -144,11 +180,11 @@ export function App() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: localStorage.getItem(SID_KEY) ?? "", message }),
+        body: JSON.stringify({ sessionId, message }),
       });
       if (!res.ok) throw new Error(`Request failed (${res.status})`);
       const sid = res.headers.get("x-session-id");
-      if (sid) localStorage.setItem(SID_KEY, sid);
+      if (sid) { setSessionId(sid); localStorage.setItem(SID_KEY, sid); }
       if (!res.body) throw new Error("No response stream");
       const reader = res.body.getReader();
       const dec = new TextDecoder();
@@ -202,6 +238,7 @@ export function App() {
             patchLast((m) => ({ ...m, text: m.text + data.text }));
           } else if (event === "error")
             patchLast((m) => ({ ...m, text: m.text + `\n[Error: ${data.message}]` }));
+          else if (event === "done") void refreshThreads();
         }
       }
     } catch (err) {
@@ -215,7 +252,7 @@ export function App() {
   return (
     <main className="mx-auto flex h-dvh w-full max-w-6xl flex-col gap-3 p-3 sm:p-6 lg:flex-row">
       {/* ------------------------------- Left rail ------------------------------ */}
-      <aside className="flex shrink-0 flex-col gap-3 lg:w-80">
+      <aside className="flex shrink-0 flex-col gap-3 lg:min-h-0 lg:w-80">
         {/* Kitty card */}
         <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card p-4">
           <div
@@ -247,30 +284,29 @@ export function App() {
           </div>
         </div>
 
-        {/* Catalog of tiny cards */}
-        <div className="scrollbar-hide -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0">
-          <p className="hidden px-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground lg:block">
-            Catalog
-          </p>
-          {CATALOG.map((item) => (
-            <button
-              key={item.title}
-              type="button"
-              disabled={busy}
-              onClick={() => void send(item.prompt)}
-              className="group flex w-48 shrink-0 items-start gap-3 rounded-xl border border-border/70 bg-card p-3 text-left transition hover:-translate-y-0.5 hover:border-border hover:bg-accent disabled:pointer-events-none disabled:opacity-50 lg:w-full"
-            >
-              <span className={`grid size-8 shrink-0 place-items-center rounded-lg text-base ${item.tint}`}>
-                {item.emoji}
-              </span>
-              <span className="min-w-0">
-                <span className="block text-xs font-medium">{item.title}</span>
-                <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">
-                  {item.desc}
-                </span>
-              </span>
-            </button>
-          ))}
+        <div className="flex h-[32dvh] min-h-40 flex-col overflow-hidden rounded-2xl border border-border/70 bg-card p-3 lg:h-auto lg:min-h-0 lg:flex-1">
+          <button type="button" disabled={busy || threadsLoading} onClick={() => void createConversation().catch((error) => setStatus(error.message))}
+            className="mb-3 inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-3 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50">
+            <Plus className="size-4" /> New conversation
+          </button>
+          <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Conversations</p>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <AISidebar
+              items={sidebarItems}
+              activeId={sessionId}
+              onActiveChange={(id) => void openConversation(id).catch((error) => setStatus(error.message))}
+              renderIcon={() => <MessageSquare className="size-4" />}
+              ariaLabel="Conversation threads"
+              className="w-full"
+              renderMenu={(item, controls) => (
+                <button type="button" onClick={() => { controls.close(); void removeConversation(item.id).catch((error) => setStatus(error.message)); }}
+                  className="flex h-8 w-full items-center gap-2 rounded-lg px-2.5 text-left text-xs text-destructive outline-none transition-colors hover:bg-destructive/10 focus-visible:bg-destructive/10 focus-visible:ring-2 focus-visible:ring-ring">
+                  <Trash2 className="size-3.5" /> Delete conversation
+                </button>
+              )}
+            />
+            {!threadsLoading && !threads.length && <p className="px-2 py-4 text-center text-xs text-muted-foreground">No conversations yet.</p>}
+          </div>
         </div>
       </aside>
 
@@ -367,7 +403,7 @@ export function App() {
             value={input}
             onValueChange={setInput}
             onSubmit={(value) => void send(value)}
-            loading={busy}
+            loading={busy || threadsLoading}
             placeholder="Message Kitty…"
             aria-label="Message Kitty"
           />

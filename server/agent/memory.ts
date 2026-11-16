@@ -53,6 +53,14 @@ export async function indexTurn(turn: Turn) {
   });
 }
 
+export async function deleteSessionIndex(sessionId: string) {
+  if (!client || !(await ensureCollection())) return;
+  await client.delete(COLLECTION, {
+    filter: { must: [{ key: "session_id", match: { value: sessionId } }] },
+    wait: true,
+  });
+}
+
 type Ranked = { id: string; score: number };
 export function reciprocalRankFusion(lists: string[][], k = 60): Ranked[] {
   const scores = new Map<string, number>();
