@@ -16,8 +16,8 @@ if (!fixturePath) {
   console.error("Usage: npm run bench:memory -- <labeled-cases.json>\nOr set MEMORY_EVAL_FILE. See scripts/memory-eval.example.json.");
   process.exit(1);
 }
-if (!process.env.GEMINI_API_KEY || !process.env.QDRANT_URL) {
-  console.error("Set GEMINI_API_KEY and QDRANT_URL in .env before running the hybrid memory benchmark.");
+if (!process.env.QDRANT_URL) {
+  console.error("Set QDRANT_URL in .env before running the hybrid memory benchmark.");
   process.exit(1);
 }
 

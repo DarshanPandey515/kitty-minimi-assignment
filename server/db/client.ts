@@ -17,3 +17,7 @@ const turnColumns = new Set((db.prepare("PRAGMA table_info(turns)").all() as { n
 if (!turnColumns.has("embedding_status")) db.exec("ALTER TABLE turns ADD COLUMN embedding_status TEXT NOT NULL DEFAULT 'pending'");
 if (!turnColumns.has("embedding_attempts")) db.exec("ALTER TABLE turns ADD COLUMN embedding_attempts INTEGER NOT NULL DEFAULT 0");
 if (!turnColumns.has("embedding_retry_at")) db.exec("ALTER TABLE turns ADD COLUMN embedding_retry_at TEXT");
+if (!turnColumns.has("embedding_model")) {
+  db.exec("ALTER TABLE turns ADD COLUMN embedding_model TEXT");
+  db.exec("UPDATE turns SET embedding_status = 'pending', embedding_retry_at = NULL");
+}

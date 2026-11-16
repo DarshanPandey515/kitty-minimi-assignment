@@ -1,24 +1,54 @@
 import { performance } from "node:perf_hooks";
-import { ai } from "./gemini.js";
+import { pipeline } from "@huggingface/transformers";
 import { pendingTurns, retryTurnIndex, markTurnIndexed, searchTurns, turnsByIds, turnsInRange, type Turn } from "../db/queries.js";
 import { isInternalAssistantText } from "./prefetch.js";
 import { QdrantClient } from "@qdrant/js-client-rest";
 
-const DIMENSIONS = 768;
-const COLLECTION = process.env.QDRANT_COLLECTION ?? "kitty_turns";
+const MODEL = "Xenova/all-MiniLM-L6-v2";
+const MODEL_REVISION = "751bff37182d3f1213fa05d7196b954e230abad9";
+const EMBEDDING_VERSION = `${MODEL}@${MODEL_REVISION}:q8:mean-normalized`;
+const DIMENSIONS = 384;
+const COLLECTION = process.env.QDRANT_MINILM_COLLECTION ?? "kitty_turns_minilm384";
 const client = process.env.QDRANT_URL
   ? new QdrantClient({ url: process.env.QDRANT_URL, ...(process.env.QDRANT_API_KEY ? { apiKey: process.env.QDRANT_API_KEY } : {}) })
   : null;
 let collectionReady: Promise<boolean> | undefined;
+type Extractor = Awaited<ReturnType<typeof pipeline<"feature-extraction">>>;
+let modelReady: Promise<Extractor> | undefined;
+
+function getExtractor(): Promise<Extractor> {
+  const progressSteps = new Map<string, number>();
+  modelReady ??= pipeline("feature-extraction", MODEL, {
+    revision: MODEL_REVISION,
+    dtype: "q8",
+    progress_callback: (info) => {
+      if (info.status !== "progress") return;
+      const { file, progress } = info;
+      const step = Math.floor(progress / 10) * 10;
+      if (step >= 100 || step > (progressSteps.get(file) ?? -10)) {
+        progressSteps.set(file, step);
+        console.info(`[memory] model download ${file}: ${Math.min(step, 100)}%`);
+      }
+    },
+  }).then(async (extractor) => {
+    await extractor("Kitty local memory model warm-up.", { pooling: "mean", normalize: true });
+    console.info("[memory] MiniLM embedding model ready");
+    return extractor;
+  }).catch((err) => {
+    modelReady = undefined;
+    throw err;
+  });
+  return modelReady;
+}
+
+export async function warmupMemoryModel() {
+  await getExtractor();
+}
 
 export async function embedText(text: string): Promise<number[]> {
-  const result = await ai.models.embedContent({
-    model: process.env.GEMINI_MODEL_EMBEDDING ?? "gemini-embedding-001",
-    contents: text,
-    config: { outputDimensionality: DIMENSIONS },
-  });
-  const vector = result.embeddings?.[0]?.values;
-  if (!vector || vector.length !== DIMENSIONS) throw new Error("Gemini returned an invalid embedding");
+  const output = await (await getExtractor())(text, { pooling: "mean", normalize: true });
+  const vector = output.tolist()[0] as number[] | undefined;
+  if (!vector || vector.length !== DIMENSIONS) throw new Error(`MiniLM returned an invalid ${vector?.length ?? 0}-dimensional embedding`);
   return vector;
 }
 
@@ -48,7 +78,7 @@ export async function indexTurn(turn: Turn) {
     points: [{
       id: turn.id,
       vector,
-      payload: { session_id: turn.session_id, role: turn.role, ts: turn.ts, ts_ms: Date.parse(turn.ts) },
+      payload: { session_id: turn.session_id, role: turn.role, ts: turn.ts, ts_ms: Date.parse(turn.ts), embedding_model: EMBEDDING_VERSION },
     }],
   });
 }
@@ -151,11 +181,11 @@ async function drainIndexQueue() {
   if (workerRunning || !client) return;
   workerRunning = true;
   try {
-    const batch = pendingTurns(8);
+    const batch = pendingTurns(EMBEDDING_VERSION, 8);
     for (const turn of batch) {
       try {
         await indexTurn(turn);
-        markTurnIndexed(turn.id);
+        markTurnIndexed(turn.id, EMBEDDING_VERSION);
       } catch (err) {
         retryTurnIndex(turn.id, turn.embedding_attempts);
         console.warn("[memory] index retry scheduled:", (err as Error).message);

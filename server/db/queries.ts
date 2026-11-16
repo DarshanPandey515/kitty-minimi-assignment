@@ -84,13 +84,13 @@ export function turnsByIds(sessionId: string, ids: string[]): Turn[] {
 }
 
 export type PendingTurn = Turn & { embedding_attempts: number };
-export function pendingTurns(limit = 8): PendingTurn[] {
-  return db.prepare("SELECT * FROM turns WHERE embedding_status = 'pending' AND (embedding_retry_at IS NULL OR embedding_retry_at <= ?) ORDER BY ts LIMIT ?")
-    .all(new Date().toISOString(), limit) as PendingTurn[];
+export function pendingTurns(model: string, limit = 8): PendingTurn[] {
+  return db.prepare("SELECT * FROM turns WHERE (embedding_status = 'pending' OR embedding_model IS NOT ?) AND (embedding_retry_at IS NULL OR embedding_retry_at <= ?) ORDER BY ts LIMIT ?")
+    .all(model, new Date().toISOString(), limit) as PendingTurn[];
 }
 
-export function markTurnIndexed(id: string) {
-  db.prepare("UPDATE turns SET embedding_status = 'indexed', embedding_retry_at = NULL WHERE id = ?").run(id);
+export function markTurnIndexed(id: string, model: string) {
+  db.prepare("UPDATE turns SET embedding_status = 'indexed', embedding_model = ?, embedding_retry_at = NULL WHERE id = ?").run(model, id);
 }
 
 export function retryTurnIndex(id: string, attempts: number) {

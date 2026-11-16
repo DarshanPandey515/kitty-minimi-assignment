@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS turns (
   entities_json TEXT NOT NULL DEFAULT '[]',
   embedding_status TEXT NOT NULL DEFAULT 'pending',
   embedding_attempts INTEGER NOT NULL DEFAULT 0,
-  embedding_retry_at TEXT
+  embedding_retry_at TEXT,
+  embedding_model TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_turns_session_ts ON turns(session_id, ts);
 

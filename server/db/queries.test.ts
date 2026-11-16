@@ -18,6 +18,16 @@ test("date-range turn retrieval remains scoped to its session", () => {
   assert.deepEqual(queries.turnsInRange("session-a", start, end).map((turn) => turn.session_id), ["session-a"]);
 });
 
+test("indexed turns record their embedding model and leave the pending queue", () => {
+  queries.ensureSession("session-index");
+  const turn = queries.insertTurn("session-index", "user", "Index this turn");
+  const model = "Xenova/all-MiniLM-L6-v2@revision:q8:mean-normalized";
+  queries.markTurnIndexed(turn.id, "legacy-model");
+  assert.equal(queries.pendingTurns(model).some((pending) => pending.id === turn.id), true);
+  queries.markTurnIndexed(turn.id, model);
+  assert.equal(queries.pendingTurns(model).some((pending) => pending.id === turn.id), false);
+});
+
 test("conversation listing summarizes sessions and deletion removes their turns", () => {
   queries.ensureSession("session-delete");
   queries.insertTurn("session-delete", "user", "A conversation title");
