@@ -85,23 +85,26 @@ export async function synthesize(args: {
     if (calls.length) {
       full += turnText;
       contents.push({ role: "model", parts });
-      const responses: any[] = [];
-      for (const call of calls) {
+      const batch = calls.map((call) => {
         const q = String(call.args?.query ?? "");
-        let results: SearchResult[] = [];
-        if (call.name === "web_search" && q && searches < MAX_SEARCHES) {
-          searches++;
-          args.onSearch(q);
-          results = await webSearch(q);
-          args.onSearch(q, results);
-        }
-        responses.push({
+        if (call.name !== "web_search" || !q || searches >= MAX_SEARCHES) return null;
+        searches++;
+        args.onSearch(q);
+        return { q, request: webSearch(q) };
+      });
+      const settled = await Promise.allSettled(batch.map((search) => search?.request));
+      const responses = calls.map((call, index) => {
+        const result = settled[index];
+        const results = result.status === "fulfilled" ? result.value ?? [] : [];
+        const search = batch[index];
+        if (search) args.onSearch(search.q, results);
+        return {
           functionResponse: {
             name: call.name,
             response: { results: results.map((r) => ({ ...r, published_at: r.published_at ?? "undated" })), note: results.length ? undefined : "no results (search failed or empty)" },
           },
-        });
-      }
+        };
+      });
       contents.push({ role: "user", parts: responses });
       continue;
     }

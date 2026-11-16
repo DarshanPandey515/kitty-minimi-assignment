@@ -331,6 +331,99 @@ test("agent planning, dated web evidence, citations, and no-search behavior use 
   assert.deepEqual(searchCalls, corpus.agentCases.filter((item: any) => item.needsWeb).map((item: any) => item.searchQueries[0]));
 });
 
+const toolCall = (query: string, name = "web_search") => ({ functionCall: { name, args: { query } } });
+const modelChunk = (parts: unknown[]) => ({ candidates: [{ content: { parts } }] });
+const searchPlan = { intent: "search" as const, entities: [], date_range: null, needs_memory: false, needs_web: true, search_queries: [] };
+
+test("same-round searches overlap and Gemini receives ordered results despite a failed search", async (t) => {
+  const started: string[] = [];
+  const progress: [string, string[] | undefined][] = [];
+  const tokens: string[] = [];
+  let rounds = 0;
+  let releaseFirst!: () => void;
+  const firstPending = new Promise<void>((resolve) => { releaseFirst = resolve; });
+  t.mock.method(globalThis, "fetch", async (_url: unknown, options: { body: string }) => {
+    const { query } = JSON.parse(options.body);
+    started.push(query);
+    if (query === "first") await firstPending;
+    if (query === "failed") throw new Error("fixture search unavailable");
+    return Response.json({ results: [{ title: query, url: `https://fixture.example/${query}`, content: `${query} evidence` }] });
+  });
+  t.mock.method(ai.models, "generateContentStream", async function* (args: any) {
+    if (++rounds === 1) {
+      yield modelChunk([toolCall("first"), toolCall("failed")]);
+      yield modelChunk([toolCall("third")]);
+      return;
+    }
+    const parts = args.contents.at(-1).parts;
+    assert.deepEqual(parts.map((part: any) => part.functionResponse.name), ["web_search", "web_search", "web_search"]);
+    const responses = parts.map((part: any) => part.functionResponse.response);
+    assert.deepEqual(responses, [
+      { results: [{ title: "first", url: "https://fixture.example/first", snippet: "first evidence", published_at: "undated" }], note: undefined },
+      { results: [], note: "no results (search failed or empty)" },
+      { results: [{ title: "third", url: "https://fixture.example/third", snippet: "third evidence", published_at: "undated" }], note: undefined },
+    ]);
+    yield modelChunk([{ text: responses.flatMap((response: any) => response.results.map((source: any) => `[${source.title}](${source.url})`)).join(" ") }]);
+  });
+
+  const run = synthesizer.synthesize({
+    plan: searchPlan, memoryBlock: "", history: [], userMessage: "Search three topics",
+    onToken: (token) => tokens.push(token),
+    onSearch: (query, results) => progress.push([query, results?.map((source) => source.title)]),
+  });
+  try {
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(started, ["first", "failed", "third"], "all searches must start while the first is pending");
+    assert.equal(rounds, 1, "the next Gemini round must wait for the whole batch");
+    assert.deepEqual(progress.filter(([, results]) => results === undefined), [["first", undefined], ["failed", undefined], ["third", undefined]]);
+  } finally {
+    releaseFirst();
+    await run;
+  }
+  assert.deepEqual(progress.filter(([, results]) => results !== undefined), [["first", ["first"]], ["failed", []], ["third", ["third"]]]);
+  assert.equal(rounds, 2);
+  assert.equal(tokens.join(""), "[first](https://fixture.example/first) [third](https://fixture.example/third)");
+});
+
+test("search budget is shared across Gemini rounds and skips invalid or excess calls", async (t) => {
+  const queries: string[] = [];
+  const starts: string[] = [];
+  const completions: string[] = [];
+  const toolAvailability: boolean[] = [];
+  t.mock.method(globalThis, "fetch", async (_url: unknown, options: { body: string }) => {
+    const { query } = JSON.parse(options.body);
+    queries.push(query);
+    return Response.json({ results: [{ title: query, url: `https://fixture.example/${query}` }] });
+  });
+  t.mock.method(ai.models, "generateContentStream", async function* (args: any) {
+    toolAvailability.push(Boolean(args.config.tools));
+    if (toolAvailability.length === 1) {
+      yield modelChunk([toolCall("ignored", "unknown"), toolCall(""), ...["1", "2", "3", "4"].map((q) => toolCall(q))]);
+    } else if (toolAvailability.length === 2) {
+      const responses = args.contents.at(-1).parts.map((part: any) => part.functionResponse);
+      assert.deepEqual(responses.map((response: any) => [response.name, response.response.results[0]?.title]), [
+        ["unknown", undefined], ["web_search", undefined], ...["1", "2", "3", "4"].map((q) => ["web_search", q]),
+      ]);
+      assert.deepEqual(queries, ["1", "2", "3", "4"]);
+      yield modelChunk([toolCall("5"), toolCall("6"), toolCall("over budget")]);
+    } else {
+      const responses = args.contents.at(-1).parts.map((part: any) => part.functionResponse.response);
+      assert.deepEqual(responses.map((response: any) => response.results[0]?.title), ["5", "6", undefined]);
+      yield modelChunk([{ text: "Done." }]);
+    }
+  });
+
+  const answer = await synthesizer.synthesize({
+    plan: searchPlan, memoryBlock: "", history: [], userMessage: "Search multiple rounds",
+    onToken: () => {}, onSearch: (query, results) => (results ? completions : starts).push(query),
+  });
+  assert.deepEqual(toolAvailability, [true, true, false]);
+  assert.deepEqual(queries, ["1", "2", "3", "4", "5", "6"]);
+  assert.deepEqual(starts, queries);
+  assert.deepEqual(completions, queries);
+  assert.equal(answer.text, "Done.");
+});
+
 test("Postgres pricing can be compared in a new thread from extracted historical claims", async () => {
   const scenario = corpus.crossConversationCases[0];
   try {
