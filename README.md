@@ -22,7 +22,7 @@ flowchart LR
     Agent --> Answer[Gemini streaming answer]
     Agent --> Search[Tavily web search]
     Recall --> SQLite[(SQLite source of truth)]
-    Recall --> Embed[Gemini embeddings]
+    Recall --> Embed[Local MiniLM embeddings]
     Embed --> Qdrant[(Qdrant vector index)]
     Qdrant --> Recall
     Search --> Answer
@@ -35,8 +35,8 @@ flowchart LR
 flowchart TD
     Query[Recall request] --> Kind{Request type}
     Kind -->|Date-only recall| DateSQL[Session-scoped SQLite date lookup]
-    Kind -->|Semantic or temporal comparison| Embed[Start query embedding]
-    Embed --> Lexical[SQLite lexical lookup runs while embedding is in flight]
+    Kind -->|Semantic or temporal comparison| Lexical[Session-scoped SQLite lexical search]
+    Kind -->|Semantic or temporal comparison| Embed[Local MiniLM query embedding]
     Embed --> Vector[Qdrant search with session and optional date filters]
     Lexical --> Fuse[RRF rank fusion]
     Vector --> Fuse
@@ -45,7 +45,7 @@ flowchart TD
     Evidence --> Response[Existing answer flow]
 ```
 
-SQLite is canonical. Qdrant is a rebuildable index; pending turns are indexed in the background, and SQL retrieval remains available if the vector service is unavailable.
+SQLite is canonical. Qdrant is a rebuildable 384-dimensional MiniLM index; pending turns are indexed in the background, and SQL retrieval remains available if MiniLM or Qdrant is unavailable. First startup downloads about 25 MB of model files; later startups use the local cache.
 
 ## Requirements
 
@@ -79,11 +79,11 @@ Qdrant is configured for local development at `http://localhost:6333`. Leave `QD
 | `npm start` | Run Express and serve the built app |
 | `npm run bench:memory -- path/to/cases.json` | Compare SQL-only and hybrid recall metrics on labeled cases |
 
-The memory benchmark reports Hit@8, Recall@8, MRR, and p50/p95 latency for semantic and pure temporal cases. It requires `GEMINI_API_KEY`, `QDRANT_URL`, a running database, and labeled turn IDs; see [`scripts/memory-eval.example.json`](scripts/memory-eval.example.json) for the case format.
+The memory benchmark reports Hit@8, Recall@8, MRR, and p50/p95 latency for semantic and pure temporal cases. It requires `QDRANT_URL`, a running database, the local MiniLM model, and labeled turn IDs; see [`scripts/memory-eval.example.json`](scripts/memory-eval.example.json) for the case format.
 
 ## Configuration
 
-Copy [`.env.example`](.env.example) to `.env` and set the required API keys. `DB_PATH` defaults to `./data/agent.db`; Qdrant collection and embedding model settings are also documented in the example file.
+Copy [`.env.example`](.env.example) to `.env` and set the Gemini and Tavily API keys. `DB_PATH` defaults to `./data/agent.db`; Qdrant collection settings are also documented in the example file.
 
 ## Project notes
 
