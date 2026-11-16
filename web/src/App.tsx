@@ -209,12 +209,12 @@ export function App() {
             aria-hidden
             className="pointer-events-none absolute -bottom-14 -right-6 size-40 rounded-full bg-cyan-400/30 blur-3xl"
           />
-          <div className="relative flex items-center gap-4 lg:flex-col lg:items-start">
+          <div className="relative flex items-center gap-3">
             <div
-              className="shrink-0"
-              style={{ filter: "drop-shadow(0 10px 20px rgb(251 113 133 / 0.35))" }}
+              className="size-8 shrink-0"
+              style={{ filter: "drop-shadow(0 4px 8px rgb(251 113 133 / 0.3))" }}
             >
-              <PixelCat className="w-24 lg:w-28" />
+              <PixelCat className="w-full" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
