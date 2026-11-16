@@ -581,14 +581,14 @@ erDiagram
 | `insertTurn(sessionId, role, text)` | create a turn, returns it |
 | `getTurn(id)` | fetch one turn |
 | `lastTurns(sessionId, n)` | last *n* turns, chronological |
-| `turnsInRange(start, end, limit=40)` | **all sessions** in a time window, ascending |
+| `turnsInRange(sessionId, start, end, limit=40)` | One session's turns in a time window, ascending |
 | `claimsByEntities(entities, limit=20)` | claims for named entities (case-insensitive) |
 | `recentClaims(days, limit=20)` | claims with `as_of` newer than N days |
 | `claimsByEntityOrText(q, limit=20)` | LIKE search for the recall escape hatch |
 | `lastEntities(sessionId)` | deduped entities from the last 3 non-empty turns |
 | `writeExtraction(turnId, entities, claims)` | transactional, idempotent per turn |
 
-Note: `turnsInRange` intentionally crosses sessions — this is a single-user app, so "what did I ask on Monday" should find it regardless of session.
+Date-range retrieval is session-scoped to prevent conversation data crossing sessions.
 
 ---
 
@@ -822,7 +822,7 @@ Read this before touching the affected files.
 
 6. **Extraction is idempotent per `turn_id`.** `writeExtraction` deletes then reinserts in a transaction. Re-running extraction for a turn is safe.
 
-7. **`turnsInRange` intentionally crosses sessions.** It is not a bug; it's what makes "what did I ask on Monday" work in a single-user app. Adding multi-tenancy requires scoping it by user.
+7. **Date-range retrieval is session-scoped.** Qdrant retrieval always filters by session; SQLite remains canonical.
 
 8. **The client mutates only the last message.** `patchLast` assumes events always target the newest assistant bubble. Any change that emits events for older messages will misrender.
 
@@ -904,3 +904,13 @@ user text
 ```
 
 Memory is context, not a tool. Code owns dates and recall; the model owns prose and search queries.
+
+## 20. Hybrid conversation memory
+
+SQLite remains the source of truth for turns and claims. Qdrant (`kitty_turns`) is a rebuildable index of turn embeddings, keyed by the SQLite turn UUID. Set `QDRANT_URL` to enable it; `docker compose up -d qdrant` starts the local service. Gemini `gemini-embedding-001` generates 768-dimensional vectors.
+
+For semantic recall, the embedding request starts first. While it is in flight, the agent runs its synchronous, session-scoped lexical and optional temporal SQLite queries. It then queries Qdrant with a required session filter and an optional timestamp range, merges ranked IDs with reciprocal rank fusion, and hydrates the top eight from SQLite. Pure date recall uses the SQLite date range directly. If embeddings or Qdrant fail, the SQL candidates still proceed.
+
+Every inserted turn gets `embedding_status='pending'` in the same SQLite insert. A single bounded in-process worker handles up to eight pending turns per poll, embeds and upserts by turn UUID, marks successful rows indexed, and persists retry times with capped backoff. Existing rows are migrated to pending and indexed gradually after startup; recent turns remain available from SQLite while indexing catches up.
+
+Retrieval logs report embedding, lexical, temporal, Qdrant, fusion and total milliseconds plus candidate counts. `MEMORY_EVAL_FILE=... npm run bench:memory` compares SQL-only and hybrid recall@8 and p50/p95 retrieval latency for labeled cases. Start with `scripts/memory-eval.example.json`, replace placeholders with real session/turn IDs, and run with Gemini and Qdrant configured. No benchmark numbers are recorded here until that labeled corpus has been run.

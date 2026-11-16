@@ -31,7 +31,7 @@ export function renderMemory(turns: Turn[], claims: Claim[]): string {
 export async function prefetchWithStats(plan: Plan, sessionId: string) {
   try {
     const tail = lastTurns(sessionId, 10).filter((t) => t.role !== "assistant" || !isInternalAssistantText(t.text));
-    const dated = plan.date_range ? turnsInRange(plan.date_range[0], plan.date_range[1]).filter((t) => t.role !== "assistant" || !isInternalAssistantText(t.text)) : [];
+    const dated = plan.date_range ? turnsInRange(sessionId, plan.date_range[0], plan.date_range[1]).filter((t) => t.role !== "assistant" || !isInternalAssistantText(t.text)) : [];
     const seen = new Set<string>();
     const turns = [...dated, ...tail].filter((t) => !seen.has(t.id) && seen.add(t.id)).sort((a, b) => a.ts.localeCompare(b.ts));
     let claims = claimsByEntities(plan.entities, 20);

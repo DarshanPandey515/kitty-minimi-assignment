@@ -4,6 +4,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { chatRouter } from "./routes/chat.js";
+import { startMemoryIndexWorker } from "./agent/memory.js";
 
 const app = express();
 app.use(express.json({ limit: "100kb" }));
@@ -16,4 +17,7 @@ if (fs.existsSync(dist)) {
 }
 
 const port = Number(process.env.PORT ?? 3001);
-app.listen(port, () => console.log(`server on http://localhost:${port}`));
+app.listen(port, () => {
+  console.log(`server on http://localhost:${port}`);
+  startMemoryIndexWorker();
+});

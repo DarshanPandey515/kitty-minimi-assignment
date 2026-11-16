@@ -50,13 +50,33 @@ export function searchTurns(sessionId: string, query: string, limit = 20): Turn[
       };
       return score(b) - score(a) || b.ts.localeCompare(a.ts);
     })
-    .slice(0, limit)
-    .sort((a, b) => a.ts.localeCompare(b.ts));
+    .slice(0, limit);
 }
 
-/** Turns across all sessions within [start, end]. */
-export function turnsInRange(start: string, end: string, limit = 40): Turn[] {
-  return db.prepare("SELECT * FROM turns WHERE ts BETWEEN ? AND ? ORDER BY ts ASC LIMIT ?").all(start, end, limit) as Turn[];
+/** Turns in one session within [start, end]. */
+export function turnsInRange(sessionId: string, start: string, end: string, limit = 40): Turn[] {
+  return db.prepare("SELECT * FROM turns WHERE session_id = ? AND ts BETWEEN ? AND ? ORDER BY ts ASC LIMIT ?").all(sessionId, start, end, limit) as Turn[];
+}
+
+export function turnsByIds(sessionId: string, ids: string[]): Turn[] {
+  if (!ids.length) return [];
+  return db.prepare(`SELECT * FROM turns WHERE session_id = ? AND id IN (${ids.map(() => "?").join(",")})`).all(sessionId, ...ids) as Turn[];
+}
+
+export type PendingTurn = Turn & { embedding_attempts: number };
+export function pendingTurns(limit = 8): PendingTurn[] {
+  return db.prepare("SELECT * FROM turns WHERE embedding_status = 'pending' AND (embedding_retry_at IS NULL OR embedding_retry_at <= ?) ORDER BY ts LIMIT ?")
+    .all(new Date().toISOString(), limit) as PendingTurn[];
+}
+
+export function markTurnIndexed(id: string) {
+  db.prepare("UPDATE turns SET embedding_status = 'indexed', embedding_retry_at = NULL WHERE id = ?").run(id);
+}
+
+export function retryTurnIndex(id: string, attempts: number) {
+  const delay = Math.min(60_000, 1_000 * 2 ** Math.min(attempts, 6));
+  db.prepare("UPDATE turns SET embedding_attempts = embedding_attempts + 1, embedding_retry_at = ? WHERE id = ?")
+    .run(new Date(Date.now() + delay).toISOString(), id);
 }
 
 export function claimsByEntities(entities: string[], limit = 20): Claim[] {

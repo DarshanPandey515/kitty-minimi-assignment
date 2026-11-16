@@ -1,9 +1,10 @@
-import { ensureSession, insertTurn, lastEntities, lastTurns, claimsByEntityOrText, searchTurns, type Turn } from "../db/queries.js";
+import { ensureSession, insertTurn, lastEntities, lastTurns, claimsByEntityOrText, type Turn } from "../db/queries.js";
 import { resolveRelative } from "../time.js";
 import { route, type Plan } from "./router.js";
 import { formatPriorTurn, isInternalAssistantText, prefetchWithStats } from "./prefetch.js";
 import { decideRecall, synthesize } from "./synthesizer.js";
 import { extract } from "./extractor.js";
+import { retrieveMemory } from "./memory.js";
 
 export type AgentEvent =
   | { type: "plan"; data: { intent: Plan["intent"]; entities: string[]; dateRange: [string, string] | null } }
@@ -31,11 +32,18 @@ export async function runAgent(args: { sessionId: string; userMessage: string; o
   if (plan.intent === "recall" || plan.intent === "temporal_delta") {
     try {
       const recentIds = new Set(history.map((turn) => turn.id));
-      const recalledTurns = searchTurns(sessionId, userMessage, 20)
+      const recalledTurns = await retrieveMemory({
+        sessionId,
+        query: userMessage,
+        intent: plan.intent,
+        dateRange: plan.date_range,
+        excludeTurnIds: [currentTurn.id, ...recentIds],
+      });
+      const filteredRecalledTurns = recalledTurns
         .filter((turn) => turn.id !== currentTurn.id && !recentIds.has(turn.id))
         .filter((turn) => turn.role !== "assistant" || !isInternalAssistantText(turn.text));
-      if (recalledTurns.length) {
-        memoryBlock = memoryBlock.replace("</memory>", `\nRelevant matching prior turns:\n${recalledTurns.map(formatPriorTurn).join("\n")}\n</memory>`);
+      if (filteredRecalledTurns.length) {
+        memoryBlock = memoryBlock.replace("</memory>", `\nRelevant matching prior turns:\n${filteredRecalledTurns.map(formatPriorTurn).join("\n")}\n</memory>`);
       }
       const decision = await decideRecall({ plan, memoryBlock, userMessage });
       if (decision.action === "recall") {

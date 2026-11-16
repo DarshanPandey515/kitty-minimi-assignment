@@ -1,0 +1,16 @@
+[
+  {
+    "sessionId": "replace-with-session-id",
+    "query": "What was the desktop memory kit price we discussed?",
+    "intent": "recall",
+    "dateRange": null,
+    "relevantTurnIds": ["replace-with-relevant-turn-id"]
+  },
+  {
+    "sessionId": "replace-with-session-id",
+    "query": "What did I ask on November 15?",
+    "intent": "recall",
+    "dateRange": ["2026-11-15T00:00:00.000Z", "2026-11-15T23:59:59.999Z"],
+    "relevantTurnIds": ["replace-with-relevant-turn-id"]
+  }
+]
